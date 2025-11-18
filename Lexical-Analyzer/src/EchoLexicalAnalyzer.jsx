@@ -226,8 +226,50 @@ const LexicalAnalyzerTemplate = () => {
         continue;
       }
 
-      // - String Insertion Symbol (@)
+      // Identifiers and Keywords
+      if (/[a-zA-Z_]/.test(char)) {
+        let word = '';
+        while (i < code.length && /[a-zA-Z0-9_]/.test(code[i])) {
+          word += code[i];
+          i++;
+        }
+        
+        const lowerWord = word.toLowerCase();
+        const tokenType = KEYWORDS[lowerWord] || 'IDENTIFIER';
+        
+        tokenList.push({ line, type: tokenType, lexeme: word });
+        continue;
+      }
 
+      // - String Insertion Symbol (@)
+      if (char === '@') {
+
+        const isLetter = (c) => /[A-Za-z]/.test(c);
+        const isDigit = (c) => /[0-9]/.test(c);
+
+        let lexeme = '@';
+        let j = i + 1;
+
+        if (isLetter(code[j]) || code[j] === '_') {
+          while (
+            j < code.length &&
+            (isLetter(code[j]) || isDigit(code[j]) || code[j] === '_')
+          ) {
+            lexeme += code[j];
+            j++;
+          }
+        }
+
+        tokenList.push({
+          line,
+          type: 'STRING_INSERTION',
+          lexeme
+        });
+
+        i = j;
+        continue;
+      }
+      
       // - Operators
 
       // - Delimiters
