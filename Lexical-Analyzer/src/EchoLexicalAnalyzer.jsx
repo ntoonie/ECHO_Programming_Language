@@ -159,6 +159,36 @@ const LexicalAnalyzerTemplate = () => {
         tokenList.push({ line, type: 'COMMENT_MULTI', lexeme: comment });
         continue;
       }
+       // String Insertion Symbol (@)
+if (char === '@') {
+
+  // Helper functions for identifier validation
+  const isLetter = (c) => /[A-Za-z]/.test(c);
+  const isDigit = (c) => /[0-9]/.test(c);
+
+  let lexeme = '@';
+  let j = i + 1;
+
+  // Check: identifier must start with letter or underscore
+  if (isLetter(code[j]) || code[j] === '_') {
+    while (
+      j < code.length &&
+      (isLetter(code[j]) || isDigit(code[j]) || code[j] === '_')
+    ) {
+      lexeme += code[j];
+      j++;
+    }
+  }
+
+  tokenList.push({
+    line,
+    type: 'STRING_INSERTION',
+    lexeme
+  });
+
+  i = j;
+  continue;
+}
 
       // ========================================
       // String literal detection: "text"
@@ -354,15 +384,59 @@ const LexicalAnalyzerTemplate = () => {
           }
         }
 
+    // Detect @insertion
+    if (code[i] === '@') {
+      // If literal has content before @, emit it
+      if (literalBuffer.length > 0) {
         tokenList.push({
           line,
-          type: 'STRING_INSERTION',
-          lexeme
+          type: TOKEN_TYPES.STRING_LITERAL,
+          lexeme: `"${literalBuffer}`
         });
-
-        i = j;
-        continue;
+        literalBuffer = "";
       }
+
+      // Parse @identifier
+      let insertLexeme = "@";
+      i++;
+
+      const isLetter = c => /[A-Za-z]/.test(c);
+      const isDigit = c => /[0-9]/.test(c);
+
+      if (isLetter(code[i]) || code[i] === '_') {
+        while (
+          i < code.length &&
+          (isLetter(code[i]) || isDigit(code[i]) || code[i] === '_')
+        ) {
+          insertLexeme += code[i];
+          i++;
+        }
+      }
+
+      tokenList.push({
+        line,
+        type: TOKEN_TYPES.STRING_INSERTION,
+        lexeme: insertLexeme
+      });
+
+      continue;
+    }
+
+    // Normal character inside string
+    literalBuffer += code[i];
+    i++;
+  }
+
+  // Emit ending literal (even empty)
+  tokenList.push({
+    line,
+    type: TOKEN_TYPES.STRING_LITERAL,
+    lexeme: `"${literalBuffer}"`
+  });
+
+  i++; // skip closing quote
+  continue;
+}
       
       // ======================
       // Operator detection
