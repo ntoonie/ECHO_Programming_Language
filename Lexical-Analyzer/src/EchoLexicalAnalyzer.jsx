@@ -7,7 +7,9 @@ const LexicalAnalyzerTemplate = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const textareaRef = useRef(null);
 
+  // ========================================
   // Token Types for E.C.H.O Language
+  // ========================================
   const TOKEN_TYPES = {
     // Keywords
     KEYWORD_PROGRAM: 'KEYWORD_PROGRAM',
@@ -48,7 +50,9 @@ const LexicalAnalyzerTemplate = () => {
     UNKNOWN: 'UNKNOWN'
   };
 
-  // E.C.H.O Language Keywords (case-insensitive)
+  // ========================================
+  // E.C.H.O Language Keywords
+  // ========================================
   const KEYWORDS = {
     // Program keywords
     function: 'KEYWORD_PROGRAM',
@@ -93,8 +97,7 @@ const LexicalAnalyzerTemplate = () => {
   };
 
   // ========================================
-  // TODO: Implement lexical analysis logic here
-  // This function should tokenize the input code
+  // E.C.H.O Lexical analysis logic
   // ========================================
   const lexicalAnalyzer = (code) => {
     const tokenList = [];
@@ -176,13 +179,245 @@ if (char === '@') {
   continue;
 }
 
-      // TODO: Add logic for:
       // - String literals
+      if (char === '"') {
+        let str = '"';
+        i++;
+        while (i < code.length && code[i] !== '"') {
+          if (code[i] === '\\' && i + 1 < code.length) {
+            str += code[i] + code[i + 1];
+            i += 2;
+          } else {
+            if (code[i] === '\n') line++;
+            str += code[i];
+            i++;
+          }
+        }
+        if (i < code.length) {
+          str += '"';
+          i++;
+        }
+        tokenList.push({ line, type: 'STRING_LITERAL', lexeme: str });
+        continue;
+      }
+
       // - Numbers (integers and decimals)
-      // - Identifiers and keywords (case-insensitive)
-      // - String Insertion Symbol (@)
+      if (
+        /\d/.test(char) ||
+        ((char === '+' || char === '-') && /\d/.test(code[i + 1])) ||
+        (char === '.' && /\d/.test(code[i + 1]))
+      ) {
+        let num = '';
+        let isDecimal = false;
+        let hasExponent = false;
+
+        if (char === '+' || char === '-') {
+          num += char;
+          i++;
+        }
+
+        while (i < code.length) {
+          const c = code[i];
+
+          if (/\d/.test(c)) {
+            num += c;
+            i++;
+            continue;
+          }
+
+          if (c === '.' && !isDecimal && !hasExponent) {
+            isDecimal = true;
+            num += c;
+            i++;
+            continue;
+          }
+
+          if ((c === 'e' || c === 'E') && !hasExponent) {
+            hasExponent = true;
+            num += c;
+            i++;
+            if (code[i] === '+' || code[i] === '-') {
+              num += code[i];
+              i++;
+            }
+            if (i >= code.length || !/\d/.test(code[i])) {
+              break;
+            }
+            continue;
+          }
+          break;
+        }
+
+        tokenList.push({
+          line,
+          type: (isDecimal || hasExponent) ? 'DECIMAL_LITERAL' : 'NUMBER_LITERAL',
+          lexeme: num
+        });
+        continue;
+      }
+
+      // Identifiers and Keywords
+      if (/[a-zA-Z_]/.test(char)) {
+        let word = '';
+        while (i < code.length && /[a-zA-Z0-9_]/.test(code[i])) {
+          word += code[i];
+          i++;
+        }
+        
+        const lowerWord = word.toLowerCase();
+        const tokenType = KEYWORDS[lowerWord] || 'IDENTIFIER';
+        
+        tokenList.push({ line, type: tokenType, lexeme: word });
+        continue;
+      }
+
+      // String Literal Handling with String Insertion (@)
+if (char === '"') {
+  i++; // skip opening quote
+  let literalBuffer = "";
+
+  while (i < code.length && code[i] !== '"') {
+
+    // Detect @insertion
+    if (code[i] === '@') {
+      // If literal has content before @, emit it
+      if (literalBuffer.length > 0) {
+        tokenList.push({
+          line,
+          type: TOKEN_TYPES.STRING_LITERAL,
+          lexeme: `"${literalBuffer}`
+        });
+        literalBuffer = "";
+      }
+
+      // Parse @identifier
+      let insertLexeme = "@";
+      i++;
+
+      const isLetter = c => /[A-Za-z]/.test(c);
+      const isDigit = c => /[0-9]/.test(c);
+
+      if (isLetter(code[i]) || code[i] === '_') {
+        while (
+          i < code.length &&
+          (isLetter(code[i]) || isDigit(code[i]) || code[i] === '_')
+        ) {
+          insertLexeme += code[i];
+          i++;
+        }
+      }
+
+      tokenList.push({
+        line,
+        type: TOKEN_TYPES.STRING_INSERTION,
+        lexeme: insertLexeme
+      });
+
+      continue;
+    }
+
+    // Normal character inside string
+    literalBuffer += code[i];
+    i++;
+  }
+
+  // Emit ending literal (even empty)
+  tokenList.push({
+    line,
+    type: TOKEN_TYPES.STRING_LITERAL,
+    lexeme: `"${literalBuffer}"`
+  });
+
+  i++; // skip closing quote
+  continue;
+}
+      
       // - Operators
+      const nxt = code[i + 1] || "";
+
+      // Unary increment/decrement (e.g., ++, --)
+      if (char === "+" && nxt === "+") {
+        tokenList.push({ line, type: 'UNARY_OP', lexeme: "++" });
+        i += 2;
+        continue;
+      }
+      if (char === "-" && nxt === "-") {
+        tokenList.push({ line, type: 'UNARY_OP', lexeme: "--" });
+        i += 2;
+        continue;
+      }
+
+      // Assignment with equals (e.g., +=, -=, *=, /=, %=)
+      if ((char === "+" || char === "-" || char === "*" || char === "/" || char === "%") && nxt === "=") {
+        tokenList.push({ line, type: 'ASSIGNMENT_OP', lexeme: char + nxt });
+        i += 2;
+        continue;
+      }
+
+      // Equality/inequality (e.g., ==, !=)
+      if (char === "=" && nxt === "=") {
+        tokenList.push({ line, type: 'RELATIONAL_OP', lexeme: "==" });
+        i += 2;
+        continue;
+      }
+      if (char === "!" && nxt === "=") {
+        tokenList.push({ line, type: 'RELATIONAL_OP', lexeme: "!=" });
+        i += 2;
+        continue;
+      }
+
+      // Relational (e.g., >=, <=)
+      if ((char === ">" || char === "<") && nxt === "=") {
+        tokenList.push({ line, type: 'RELATIONAL_OP', lexeme: char + nxt });
+        i += 2;
+        continue;
+      }
+
+      // Logical (e.g., ||, &&)
+      if (char === "|" && nxt === "|") {
+        tokenList.push({ line, type: 'LOGICAL_OP', lexeme: "||" });
+        i += 2;
+        continue;
+      }
+      if (char === "&" && nxt === "&") {
+        tokenList.push({ line, type: 'LOGICAL_OP', lexeme: "&&" });
+        i += 2;
+        continue;
+      }
+
+      // --- Single-Character Operators ---
+      // (Checked *after* multi-character ones)
+
+      // Assignment single '='
+      if (char === "=") {
+        tokenList.push({ line, type: 'ASSIGNMENT_OP', lexeme: "=" });
+        i++;
+        continue;
+      }
+
+      // Logical NOT '!'
+      if (char === "!") {
+        tokenList.push({ line, type: 'LOGICAL_OP', lexeme: "!" });
+        i++;
+        continue;
+      }
+
+      // Relational single < >
+      if (char === "<" || char === ">") {
+        tokenList.push({ line, type: 'RELATIONAL_OP', lexeme: char });
+        i++;
+        continue;
+      }
+
+      // Arithmetic single chars: + - * / % ^
+      if ("+-*/%^".includes(char)) {
+        tokenList.push({ line, type: 'ARITHMETIC_OP', lexeme: char });
+        i++;
+        continue;
+      }
+
       // - Delimiters
+
       // - Unknown tokens
 
       // Placeholder: treat everything as unknown for now
@@ -433,7 +668,6 @@ end`;
               { type: 'IDENTIFIER', label: 'Identifiers' },
               { type: 'COMMENT_SINGLE', label: 'Single-line Comments //' },
               { type: 'COMMENT_MULTI', label: 'Multi-line Comments /* */' },
-              { type: 'DELIMITER', label: 'Braces { }' },
               { type: 'LPAREN', label: 'Left Paren (' },
               { type: 'RPAREN', label: 'Right Paren )' },
               { type: 'LBRACKET', label: 'Left Bracket [' },
