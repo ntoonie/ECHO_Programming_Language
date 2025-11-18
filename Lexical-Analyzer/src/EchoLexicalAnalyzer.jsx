@@ -148,6 +148,36 @@ const LexicalAnalyzerTemplate = () => {
         tokenList.push({ line, type: 'COMMENT_MULTI', lexeme: comment });
         continue;
       }
+       // String Insertion Symbol (@)
+if (char === '@') {
+
+  // Helper functions for identifier validation
+  const isLetter = (c) => /[A-Za-z]/.test(c);
+  const isDigit = (c) => /[0-9]/.test(c);
+
+  let lexeme = '@';
+  let j = i + 1;
+
+  // Check: identifier must start with letter or underscore
+  if (isLetter(code[j]) || code[j] === '_') {
+    while (
+      j < code.length &&
+      (isLetter(code[j]) || isDigit(code[j]) || code[j] === '_')
+    ) {
+      lexeme += code[j];
+      j++;
+    }
+  }
+
+  tokenList.push({
+    line,
+    type: 'STRING_INSERTION',
+    lexeme
+  });
+
+  i = j;
+  continue;
+}
 
       // - String literals
       if (char === '"') {
