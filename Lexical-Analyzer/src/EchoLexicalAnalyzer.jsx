@@ -529,6 +529,71 @@ end`;
     setSourceCode(sample);
   };
 
+const loadComplexSample = () => {
+    const complexSample = 
+`START
+
+struct CustomerRecord :
+  Name: string (capitalizeName),
+  Age: integer (validateAge),
+  ZipCode: string (validateZipCode)
+
+
+// Bound Functions
+
+function validateAge(value)
+  if value >= 18 then
+    return true
+  else
+    error("Age must be 18 or older.") 
+    return false
+  end if
+end function
+
+function capitalizeName(value)
+  return capitalizeEachWord(value) 
+end function
+
+function validateZipCode(value)
+  if length(value) == 5 then
+    return true
+  else
+    error("ZipCode must be 5 digits.") 
+    return false
+  end if
+end function
+
+
+// Scenario 1: Successful creation and transformation
+
+// Input Name is lowercase ("jane doe")
+myCustomer = CustomerRecord new:
+  Name: "jane doe",
+  Age: 25,
+  ZipCode: "90210"
+
+
+echo "Transformed Name in Object: @myCustomer.Name" // Output: Jane Doe
+echo "Age: @myCustomer.Age"
+echo "ZipCode: @myCustomer.ZipCode"
+
+
+// Scenario 2: Failed validation (Age < 18)
+
+// This operation would typically trigger a runtime error in ECHO
+
+youngCustomer = CustomerRecord new:
+  Name: "Billy",
+  Age: 16,  // Fails validateAge
+  ZipCode: "12345"
+
+echo "Object creation status: FAILED"
+
+END`;
+    setSourceCode(complexSample);
+};
+
+
 
   // Token type to color mapping for UI display
   const getTokenTypeColor = (type) => {
@@ -633,21 +698,28 @@ end`;
               <FileText size={20} className="sm:w-6 sm:h-6" />
               <span>Source Code Input</span>
             </h2>
+            <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={loadSampleCode}
-              className="px-3 py-2 sm:px-4 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors text-xs sm:text-sm font-medium w-full sm:w-auto"
+              className="px-3 py-2 sm:px-4 bg-yellow-200 hover:bg-yellow-300 text-gray-700 rounded-md transition-colors text-xs sm:text-sm font-medium w-full sm:w-auto"
             >
               Load Sample
             </button>
+            <button
+              onClick={loadComplexSample}
+              className="px-3 py-2 sm:px-4 bg-green-200 hover:bg-green-300 text-gray-700 rounded-md transition-colors text-xs sm:text-sm font-medium w-full sm:w-auto"
+            >
+              ECHO Code
+            </button>
           </div>
-          
+          </div>
           <textarea
             ref={textareaRef}
             value={sourceCode}
             onChange={(e) => setSourceCode(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Enter your code here..."
-            className="w-full h-48 sm:h-56 md:h-64 p-3 sm:p-4 border border-gray-300 rounded-md font-mono text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y"
+            className="w-full **h-80** p-3 sm:p-4 border border-gray-300 rounded-md font-mono text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             spellCheck={false}
           />
 
