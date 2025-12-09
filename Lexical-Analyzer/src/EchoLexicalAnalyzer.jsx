@@ -201,7 +201,7 @@ const LexicalAnalyzerTemplate = () => {
         const topIndent = indentStack[indentStack.length - 1];
         if (indentCount > topIndent) {
           indentStack.push(indentCount);
-          tokenList.push({ line, type: 'INDENT', lexeme: '/t'.repeat(indentCount) });
+          tokenList.push({ line, type: 'INDENT', lexeme: '⇥'.repeat(indentCount) });
         } else if (indentCount < topIndent) {
           emitDedentsTo(indentCount);
         }
