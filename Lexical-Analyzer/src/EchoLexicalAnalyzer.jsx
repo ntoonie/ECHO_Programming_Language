@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { PlayCircle, Trash2, FileText, Sun, Moon } from 'lucide-react';
+import { PlayCircle, Trash2, FileText, Sun, Moon, Upload } from 'lucide-react';
 import { motion } from "framer-motion";
 import logo from "../src/LOGO.svg";
 import TextArea from './TextArea';
@@ -11,7 +11,9 @@ const LexicalAnalyzerTemplate = () => {
   const [sourceCode, setSourceCode] = useState('');         // User's input source code
   const [tokens, setTokens] = useState([]);                 // Tokenized result from analysis
   const [analyzing, setAnalyzing] = useState(false);        // Loading state during analysis
+  const [uploadedSample, setUploadedSample] = useState(''); // Uploaded sample code
   const textareaRef = useRef(null);                         // Reference to textarea for cursor control
+  const fileInputRef = useRef(null);                        // Reference to file input for upload
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
@@ -30,6 +32,21 @@ const LexicalAnalyzerTemplate = () => {
 
   const handleThemeToggle = () => {
     setIsDarkMode(prevMode => !prevMode);
+  };
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === 'text/plain') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        setSourceCode(content);
+        setUploadedSample(content);
+      };
+      reader.readAsText(file);
+    } else {
+      alert('Please select a valid text file (.txt)');
+    }
   };
 
   // ========================================
@@ -600,7 +617,10 @@ const LexicalAnalyzerTemplate = () => {
   
   // Loads a sample E.C.H.O program into the source code textarea
   const loadSampleCode = () => {
-    const sample = `start
+    if (uploadedSample) {
+      setSourceCode(uploadedSample);
+    } else {
+      const sample = `start
 number x = 10
 decimal y = 20.5
 string name = "Alice"
@@ -620,11 +640,15 @@ end function
 
 echo "Result: @x"
 end`;
-    setSourceCode(sample);
+      setSourceCode(sample);
+    }
   };
 
 const loadComplexSample = () => {
-    const complexSample = 
+    if (uploadedSample) {
+      setSourceCode(uploadedSample);
+    } else {
+      const complexSample = 
 `START
 
 struct CustomerRecord :
@@ -680,10 +704,9 @@ youngCustomer = CustomerRecord new:
 echo "Object creation status: FAILED"
 
 END`;
-    setSourceCode(complexSample);
-};
-
-
+      setSourceCode(complexSample);
+    }
+  };
 
   // Token type to color mapping for UI display
   const getTokenTypeColor = (type) => {
@@ -741,6 +764,7 @@ END`;
   const handleClear = () => {
     setSourceCode('');
     setTokens([]);
+    setUploadedSample(null);
   };
 
 
@@ -820,6 +844,20 @@ END`;
                 >
                   ECHO Code
                 </button>
+                <button
+                  onClick={() => fileInputRef.current.click()}
+                  className="px-3 py-2 sm:px-4 bg-purple-200 hover:bg-purple-300 text-gray-700 rounded-md transition-colors text-xs sm:text-sm font-medium flex items-center gap-1"
+                >
+                  <Upload size={14} />
+                  Upload File
+                </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept=".txt"
+                  style={{ display: 'none' }}
+                />
               </div>
             </div>
 
