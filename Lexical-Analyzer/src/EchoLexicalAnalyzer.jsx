@@ -1,5 +1,5 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
-import { PlayCircle, Trash2, FileText, Sun, Moon } from 'lucide-react';
+import { PlayCircle, Trash2, FileText, Sun, Moon, Upload } from 'lucide-react';
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import logo from "../src/LOGO.svg";
