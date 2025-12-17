@@ -1,8 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { PlayCircle, Trash2, FileText, Sun, Moon } from 'lucide-react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import logo from "../src/LOGO.svg";
 import TextArea from './TextArea';
+
+
 // ================================================
 // E.C.H.O Programming Language Lexical Analyzer
 // ================================================
@@ -14,71 +17,96 @@ const LexicalAnalyzerTemplate = () => {
   const textareaRef = useRef(null);                         // Reference to textarea for cursor control
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark';
-  });
-
-  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const shouldBeDark = savedTheme === 'dark';
+    
     const root = window.document.documentElement;
-    if (isDarkMode) {
+    if (shouldBeDark) {
       root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
     } else {
       root.classList.remove('dark');
+    }
+    
+    return shouldBeDark;
+  });
+
+  useLayoutEffect(() => {
+    const html = document.documentElement;
+    if (isDarkMode) {
+      html.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      html.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
+    void html.offsetHeight;
   }, [isDarkMode]);
 
-  const handleThemeToggle = () => {
-    setIsDarkMode(prevMode => !prevMode);
+  const handleThemeToggle = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newMode = !isDarkMode;
+    const html = document.documentElement;
+    if (newMode) {
+      html.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      console.log('Dark mode enabled - class added:', html.classList.contains('dark'));
+    } else {
+      html.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      console.log('Light mode enabled - class removed:', html.classList.contains('dark'));
+    }
+    void html.offsetHeight;
+    // Update state
+    setIsDarkMode(newMode);
   };
 
   // ========================================
   // Token Types for E.C.H.O Language
   // ========================================
   const TOKEN_TYPES = {
-    // Keywords
-    KEYWORD_PROGRAM: 'KEYWORD_PROGRAM',
-    KEYWORD_DATATYPE: 'KEYWORD_DATATYPE',
-    KEYWORD_LOOP: 'KEYWORD_LOOP',
-    KEYWORD_CONDITIONAL: 'KEYWORD_CONDITIONAL',
-    KEYWORD_RESERVED: 'KEYWORD_RESERVED',
-    NOISE_WORD: 'NOISE_WORD',
+    // Keywords (compact)
+    KEYWORD_PROGRAM: 'KW_P',
+    KEYWORD_DATATYPE: 'KW_T',
+    KEYWORD_LOOP: 'KW_L',
+    KEYWORD_CONDITIONAL: 'KW_C',
+    KEYWORD_RESERVED: 'KW_R',
+    KEYWORD_START: 'KW_START',
+    KEYWORD_END: 'KW_END',
+    NOISE_WORD: 'NW',
     
     // Identifiers and Literals
-    IDENTIFIER: 'IDENTIFIER',
-    NUMBER_LITERAL: 'NUMBER_LITERAL',
-    DECIMAL_LITERAL: 'DECIMAL_LITERAL',
-    STRING_LITERAL: 'STRING_LITERAL',
-    BOOLEAN_LITERAL: 'BOOLEAN_LITERAL',
+    IDENTIFIER: 'ID',
+    NUMBER_LITERAL: 'NUM',
+    DECIMAL_LITERAL: 'DEC',
+    STRING_LITERAL: 'STR',
+    BOOLEAN_LITERAL: 'BOOL',
     
     // Operators
-    ASSIGNMENT_OP: 'ASSIGNMENT_OP',
-    ARITHMETIC_OP: 'ARITHMETIC_OP',
-    UNARY_OP: 'UNARY_OP',
-    LOGICAL_OP: 'LOGICAL_OP',
-    RELATIONAL_OP: 'RELATIONAL_OP',
+    ASSIGNMENT_OP: 'OP_ASG',
+    ARITHMETIC_OP: 'OP_AR',
+    UNARY_OP: 'OP_UN',
+    LOGICAL_OP: 'OP_LOG',
+    RELATIONAL_OP: 'OP_REL',
     
     // Delimiters
-    DELIMITER: 'DELIMITER',
-    LPAREN: 'LPAREN',
-    RPAREN: 'RPAREN',
-    LBRACKET: 'LBRACKET',
-    RBRACKET: 'RBRACKET',
-    COMMA: 'COMMA',
-    COLON: 'COLON',
+    DELIMITER_LEFT_PAREN: 'DEL_LPAR',
+    DELIMITER_RIGHT_PAREN: 'DEL_RPAR',
+    DELIMITER_LEFT_BRACKET: 'DEL_LBRACK',
+    DELIMITER_RIGHT_BRACKET: 'DEL_RBRACK',
+    DELIMITER_LEFT_BRACE: 'DEL_LBRACE',
+    DELIMITER_RIGHT_BRACE: 'DEL_RBRACE',
+    DELIMITER_COLON: 'DEL_COL',
+    DELIMITER_COMMA: 'DEL_COMMA',
+    DELIMITER_SEMICOLON: 'DEL_SEMI',
+    DELIMITER: 'DEL', // fallback for any other delimiters
     
-    // Special
-    STRING_INSERTION: 'STRING_INSERTION',
-    COMMENT_SINGLE: 'COMMENT_SINGLE',
-    COMMENT_MULTI: 'COMMENT_MULTI',
-    WHITESPACE: 'WHITESPACE',
-    NEWLINE: 'NEWLINE',
-    UNKNOWN: 'UNKNOWN',
-
-    // Indentation tokens
-    INDENT: 'INDENT',
-    DEDENT: 'DEDENT',
-    EOF: 'EOF'
+    // Special & diagnostics
+    STRING_INSERTION: 'SIS',
+    COMMENT_SINGLE: 'CMT',
+    COMMENT_MULTI: 'CMT',
+    UNKNOWN: 'UNK',
+    ERROR: 'ERR',
   };
 
   // ========================================
@@ -86,135 +114,83 @@ const LexicalAnalyzerTemplate = () => {
   // ========================================
   const KEYWORDS = {
     // Program keywords
-    function: 'KEYWORD_PROGRAM',
-    start: 'KEYWORD_PROGRAM',
-    end: 'KEYWORD_PROGRAM',
-    echo: 'KEYWORD_PROGRAM',
-    input: 'KEYWORD_PROGRAM',
-    return: 'KEYWORD_RESERVED',
-    struct: 'KEYWORD_RESERVED',
+    function: TOKEN_TYPES.KEYWORD_PROGRAM,
+    start: TOKEN_TYPES.KEYWORD_START,
+    end: TOKEN_TYPES.KEYWORD_END,
+    echo: TOKEN_TYPES.KEYWORD_PROGRAM,
+    input: TOKEN_TYPES.KEYWORD_PROGRAM,
+    return: TOKEN_TYPES.KEYWORD_RESERVED,
+    struct: TOKEN_TYPES.KEYWORD_RESERVED,
     
     // Data types
-    number: 'KEYWORD_DATATYPE',
-    decimal: 'KEYWORD_DATATYPE',
-    string: 'KEYWORD_DATATYPE',
-    boolean: 'KEYWORD_DATATYPE',
-    list: 'KEYWORD_DATATYPE',
+    number: TOKEN_TYPES.KEYWORD_DATATYPE,
+    decimal: TOKEN_TYPES.KEYWORD_DATATYPE,
+    string: TOKEN_TYPES.KEYWORD_DATATYPE,
+    boolean: TOKEN_TYPES.KEYWORD_DATATYPE,
+    list: TOKEN_TYPES.KEYWORD_DATATYPE,
     
     // Loop keywords
-    for: 'KEYWORD_LOOP',
-    while: 'KEYWORD_LOOP',
-    do: 'KEYWORD_LOOP',
+    for: TOKEN_TYPES.KEYWORD_LOOP,
+    while: TOKEN_TYPES.KEYWORD_LOOP,
+    do: TOKEN_TYPES.KEYWORD_LOOP,
     
     // Conditional keywords
-    if: 'KEYWORD_CONDITIONAL',
-    else: 'KEYWORD_CONDITIONAL',
-    switch: 'KEYWORD_CONDITIONAL',
-    case: 'KEYWORD_CONDITIONAL',
-    default: 'KEYWORD_CONDITIONAL',
+    if: TOKEN_TYPES.KEYWORD_CONDITIONAL,
+    else: TOKEN_TYPES.KEYWORD_CONDITIONAL,
+    elseif: TOKEN_TYPES.KEYWORD_CONDITIONAL,
+    then: TOKEN_TYPES.KEYWORD_CONDITIONAL,
+    switch: TOKEN_TYPES.KEYWORD_CONDITIONAL,
+    case: TOKEN_TYPES.KEYWORD_CONDITIONAL,
+    default: TOKEN_TYPES.KEYWORD_CONDITIONAL,
     
     // Reserved words
-    null: 'KEYWORD_RESERVED',
-    true: 'BOOLEAN_LITERAL',
-    false: 'BOOLEAN_LITERAL',
-    continue: 'KEYWORD_RESERVED',
-    break: 'KEYWORD_RESERVED',
-    new: 'KEYWORD_RESERVED',
-    this: 'KEYWORD_RESERVED',
+    null: TOKEN_TYPES.KEYWORD_RESERVED,
+    true: TOKEN_TYPES.BOOLEAN_LITERAL,
+    false: TOKEN_TYPES.BOOLEAN_LITERAL,
+    continue: TOKEN_TYPES.KEYWORD_RESERVED,
+    break: TOKEN_TYPES.KEYWORD_RESERVED,
+    new: TOKEN_TYPES.KEYWORD_RESERVED,
+    this: TOKEN_TYPES.KEYWORD_RESERVED,
     
     // Noise words
-    with: 'NOISE_WORD',
-    to: 'NOISE_WORD',
-    by: 'NOISE_WORD'
+    with: TOKEN_TYPES.NOISE_WORD,
+    to: TOKEN_TYPES.NOISE_WORD,
+    by: TOKEN_TYPES.NOISE_WORD
   };
 
   // ========================================
   // E.C.H.O Lexical Analysis Logic
   // ========================================
+  const isLetter = (c) => /[A-Za-z]/.test(c);
+  const isDigit = (c) => /[0-9]/.test(c);
+
    const lexicalAnalyzer = (rawCode) => {
     let code = rawCode || '';
     const tokenList = [];  // Accumulator for recognized tokens
+    const delimiterStack = []; // Track opening delimiters for mismatch detection
     let line = 1;          // Current line number (starts at 1)
     let i = 0;             // Current position in source code string
     
     code = code.replace(/\u00A0/g, ' ');
     code = code.replace(/[\u200B-\u200D\uFEFF]/g, '');
 
-    const tabSize = 4; 
-    const indentStack = [0]; 
-    let atLineStart = true;  
-
-    //DEDENT
-    const emitDedentsTo = (targetIndent) => {
-      while (indentStack.length > 1 && indentStack[indentStack.length - 1] > targetIndent) {
-        indentStack.pop();
-        tokenList.push({ line, type: 'DEDENT', lexeme:'⇤'});
-      }
-
-    };
-
     while (i < code.length) {
+      // Handle Windows line endings (\r\n) - skip the \r
       if (code[i] === '\r') {
-        if (code[i + 1] === '\n') {
-          i++;
-          continue;
-        } else {
-          i++;
-          continue;
-        }
+        i++;
+        continue;
       }
 
       const char = code[i];
-      //WHITESPACE
-      if (atLineStart) {
-        let indentCount = 0;
-        let j = i;
-        while (j < code.length && (code[j] === ' ' || code[j] === '\t' || code[j] === '\u00A0')) {
-          indentCount += code[j] === '\t' ? tabSize : 1;
-          j++;
-        }
-        if (j < code.length && code[j] === '\n') {
-          const wsLexeme = code.slice(i, j); 
-          tokenList.push({ line, type: 'WHITESPACE', lexeme: '␣' });
-          i = j + 1;
-          line++;
-          atLineStart = true;
-          continue;
-        }
 
-        if (j >= code.length) {
-          const wsLexeme = code.slice(i, j);
-          if (wsLexeme.length > 0) {
-            tokenList.push({ line, type: 'WHITESPACE', lexeme: '␣' });
-          } else {
-            tokenList.push({ line, type: 'WHITESPACE', lexeme: '␣' });
-          }
-          i = j;
-          break;
-        }
-
-        //INDENT
-        const topIndent = indentStack[indentStack.length - 1];
-        if (indentCount > topIndent) {
-          indentStack.push(indentCount);
-          tokenList.push({ line, type: 'INDENT', lexeme: '⇥'.repeat(indentCount) });
-        } else if (indentCount < topIndent) {
-          emitDedentsTo(indentCount);
-        }
-        i = j;
-        atLineStart = false;
-        continue;
-      }
-      //NEWLINE
+      // Ignore invisible whitespace characters for tokenization (but track lines)
       if (char === ' ' || char === '\t' || char === '\u00A0') {
         i++;
         continue;
       }
       if (char === '\n') {
-        tokenList.push({ line, type: 'NEWLINE', lexeme: '/n' });
         line++;
         i++;
-        atLineStart = true;
         continue;
       }
       // =======================================
@@ -228,7 +204,7 @@ const LexicalAnalyzerTemplate = () => {
           comment += code[i];
           i++;
         }
-        tokenList.push({ line, type: 'COMMENT_SINGLE', lexeme: '//' + comment });
+        tokenList.push({ line, type: TOKEN_TYPES.COMMENT_SINGLE, lexeme: '//' + comment });
         continue;
       }
 
@@ -238,6 +214,7 @@ const LexicalAnalyzerTemplate = () => {
       // Comments can span multiple lines until closing */
       if (char === '/' && code[i + 1] === '*') {
         let comment = '/*';
+        const startLine = line;
         i += 2;
         while (i < code.length - 1 && !(code[i] === '*' && code[i + 1] === '/')) {
           if (code[i] === '\n') line++;  
@@ -247,8 +224,15 @@ const LexicalAnalyzerTemplate = () => {
         if (i < code.length - 1) {
           comment += '*/';
           i += 2;
+          tokenList.push({ line: startLine, type: TOKEN_TYPES.COMMENT_MULTI, lexeme: comment });
+        } else {
+          tokenList.push({
+            line: startLine,
+            type: TOKEN_TYPES.ERROR,
+            lexeme: 'Unterminated block comment'
+          });
+          i = code.length;
         }
-        tokenList.push({ line, type: 'COMMENT_MULTI', lexeme: comment });
         continue;
       }
 
@@ -260,6 +244,8 @@ const LexicalAnalyzerTemplate = () => {
         let currentSegment = '';
         let startLine = line;
         i++;
+        let sawClosingQuote = false;
+        let stringErrored = false;
         
         // Process string contents until closing quote is found
         while (i < code.length && code[i] !== '"') {
@@ -269,16 +255,12 @@ const LexicalAnalyzerTemplate = () => {
             if (currentSegment.length > 0) {
               tokenList.push({ 
                 line: startLine, 
-                type: 'STRING_LITERAL', 
+                type: TOKEN_TYPES.STRING_LITERAL, 
                 lexeme: '"' + currentSegment + '"' 
               });
               currentSegment = '';
               startLine = line;
             }
-            
-            // Helper functions to identify valid identifier characters
-            const isLetter = (c) => /[A-Za-z]/.test(c);
-            const isDigit = (c) => /[0-9]/.test(c);
             
             // Build the string insertion token (e.g., @variableName)
             let lexeme = '@';
@@ -298,7 +280,7 @@ const LexicalAnalyzerTemplate = () => {
             // Create token for the string insertion
             tokenList.push({
               line: line,
-              type: 'STRING_INSERTION',
+              type: TOKEN_TYPES.STRING_INSERTION,
               lexeme: lexeme
             });
             
@@ -314,24 +296,46 @@ const LexicalAnalyzerTemplate = () => {
 
           if (code[i] === '\n') {
             line++;
+            tokenList.push({
+              line: startLine,
+              type: TOKEN_TYPES.ERROR,
+              lexeme: 'Unterminated string literal'
+            });
+            stringErrored = true;
+            i++; // consume newline to avoid infinite loop
+            break;
           }
 
           currentSegment += code[i];
           i++;
         }
         
+        if (stringErrored) {
+          continue;
+        }
+
+        if (i < code.length && code[i] === '"') {
+          sawClosingQuote = true;
+        }
+
         // Save any remaining string segment after the last @ or if no @ was found
         if (currentSegment.length > 0) {
           tokenList.push({ 
             line: startLine, 
-            type: 'STRING_LITERAL', 
+            type: TOKEN_TYPES.STRING_LITERAL, 
             lexeme: '"' + currentSegment + '"' 
           });
         }
         
-        // Skip the closing quote
-        if (i < code.length) {
+        // Skip the closing quote if present; otherwise mark an unterminated string error
+        if (sawClosingQuote) {
           i++;
+        } else {
+          tokenList.push({
+            line: startLine,
+            type: TOKEN_TYPES.ERROR,
+            lexeme: 'Unterminated string literal'
+          });
         }
         continue;
       }
@@ -349,6 +353,11 @@ const LexicalAnalyzerTemplate = () => {
         let num = '';
         let isDecimal = false;
         let hasExponent = false;
+        let invalidNumber = false;
+        let digitsAfterDot = 0;
+        let exponentDigits = 0;
+        let afterDot = false;
+        let inExponent = false;
 
         // Handle optional sign prefix (+ or -)
         if (char === '+' || char === '-') {
@@ -363,6 +372,11 @@ const LexicalAnalyzerTemplate = () => {
           // Accumulate digits
           if (/\d/.test(c)) {
             num += c;
+            if (inExponent) {
+              exponentDigits++;
+            } else if (afterDot) {
+              digitsAfterDot++;
+            }
             i++;
             continue;
           }
@@ -372,6 +386,7 @@ const LexicalAnalyzerTemplate = () => {
             isDecimal = true;
             num += c;
             i++;
+            afterDot = true;
             continue;
           }
 
@@ -380,11 +395,14 @@ const LexicalAnalyzerTemplate = () => {
             hasExponent = true;
             num += c;
             i++;
+            inExponent = true;
+            afterDot = false;
             if (code[i] === '+' || code[i] === '-') {
               num += code[i];
               i++;
             }
             if (i >= code.length || !/\d/.test(code[i])) {
+              invalidNumber = true;
               break;
             }
             continue;
@@ -392,12 +410,24 @@ const LexicalAnalyzerTemplate = () => {
           break;
         }
 
-        // Determine token type: decimal if it has . or e/E, otherwise integer
-        tokenList.push({
-          line,
-          type: (isDecimal || hasExponent) ? 'DECIMAL_LITERAL' : 'NUMBER_LITERAL',
-          lexeme: num
-        });
+        if (
+          invalidNumber ||
+          (isDecimal && digitsAfterDot === 0) ||              // trailing dot like 123.
+          (hasExponent && exponentDigits === 0)               // no digits after e/E
+        ) {
+          tokenList.push({
+            line,
+            type: TOKEN_TYPES.ERROR,
+            lexeme: num
+          });
+        } else {
+          // Determine token type: decimal if it has . or e/E, otherwise integer
+          tokenList.push({
+            line,
+            type: (isDecimal || hasExponent) ? TOKEN_TYPES.DECIMAL_LITERAL : TOKEN_TYPES.NUMBER_LITERAL,
+            lexeme: num
+          });
+        }
         continue;
       }
 
@@ -415,7 +445,7 @@ const LexicalAnalyzerTemplate = () => {
         }
         // Check if word is a keyword (case-insensitive matching)
         const lowerWord = word.toLowerCase();
-        const tokenType = KEYWORDS[lowerWord] || 'IDENTIFIER';
+        const tokenType = KEYWORDS[lowerWord] || TOKEN_TYPES.IDENTIFIER;
         
         tokenList.push({ line, type: tokenType, lexeme: word });
         continue;
@@ -426,10 +456,6 @@ const LexicalAnalyzerTemplate = () => {
       // ================================================
       // Handles cases like: @variable outside of string literals
       if (char === '@') {
-        // Helper functions to identify valid identifier characters
-        const isLetter = (c) => /[A-Za-z]/.test(c);
-        const isDigit = (c) => /[0-9]/.test(c);
-
         let lexeme = '@';
         let j = i + 1;
 
@@ -446,7 +472,7 @@ const LexicalAnalyzerTemplate = () => {
 
         tokenList.push({
           line,
-          type: 'STRING_INSERTION',
+          type: TOKEN_TYPES.STRING_INSERTION,
           lexeme
         });
 
@@ -455,142 +481,104 @@ const LexicalAnalyzerTemplate = () => {
       }
       
       // ======================
-      // Operator detection
-      // ======================
-      const nxt = code[i + 1] || "";  // Next character (or empty string if at end)
+      // Operator detection (whitespace-delimited). Any contiguous operator run must be a known operator; otherwise it's a single ERR.
+      const operatorChars = "<>!=&|+-*/%^";
+      if (operatorChars.includes(char)) {
+        let j = i;
+        while (j < code.length && operatorChars.includes(code[j])) {
+          j++;
+        }
+        const run = code.slice(i, j);
 
-      // Unary operators: increment and decrement
-      if (char === "+" && nxt === "+") {
-        tokenList.push({ line, type: 'UNARY_OP', lexeme: "++" });
-        i += 2;
-        continue;
-      }
-      if (char === "-" && nxt === "-") {
-        tokenList.push({ line, type: 'UNARY_OP', lexeme: "--" });
-        i += 2;
-        continue;
-      }
+        const singleOps = new Set(["<", ">", "=", "+", "-", "*", "/", "%", "^", "!"]);
+        const doubleOps = new Set([
+          "<=", ">=", "==", "!=",
+          "++", "--",
+          "+=", "-=", "*=", "/=", "%=", "^=",
+          "&&", "||"
+        ]);
 
-      // Compound assignment operators: +=, -=, *=, /=, %=
-      if ((char === "+" || char === "-" || char === "*" || char === "/" || char === "%") && nxt === "=") {
-        tokenList.push({ line, type: 'ASSIGNMENT_OP', lexeme: char + nxt });
-        i += 2;
-        continue;
-      }
+        if (run.length === 1 && singleOps.has(run)) {
+          const type =
+            run === "=" ? TOKEN_TYPES.ASSIGNMENT_OP :
+            (run === "<" || run === ">") ? TOKEN_TYPES.RELATIONAL_OP :
+            run === "!" ? TOKEN_TYPES.LOGICAL_OP :
+            TOKEN_TYPES.ARITHMETIC_OP;
+          tokenList.push({ line, type, lexeme: run });
+        } else if (run.length === 2 && doubleOps.has(run)) {
+          const type =
+            ["<=", ">=", "==", "!="].includes(run) ? TOKEN_TYPES.RELATIONAL_OP :
+            ["++", "--"].includes(run) ? TOKEN_TYPES.UNARY_OP :
+            ["&&", "||"].includes(run) ? TOKEN_TYPES.LOGICAL_OP :
+            TOKEN_TYPES.ASSIGNMENT_OP;
+          tokenList.push({ line, type, lexeme: run });
+        } else {
+          tokenList.push({ line, type: TOKEN_TYPES.ERROR, lexeme: run });
+        }
 
-      // Equality and inequality operators: ==, !=
-      if (char === "=" && nxt === "=") {
-        tokenList.push({ line, type: 'RELATIONAL_OP', lexeme: "==" });
-        i += 2;
-        continue;
-      }
-      if (char === "!" && nxt === "=") {
-        tokenList.push({ line, type: 'RELATIONAL_OP', lexeme: "!=" });
-        i += 2;
-        continue;
-      }
-
-      // Relational operators with equals: >=, <=
-      if ((char === ">" || char === "<") && nxt === "=") {
-        tokenList.push({ line, type: 'RELATIONAL_OP', lexeme: char + nxt });
-        i += 2;
-        continue;
-      }
-
-      // Logical operators: || (OR), && (AND)
-      if (char === "|" && nxt === "|") {
-        tokenList.push({ line, type: 'LOGICAL_OP', lexeme: "||" });
-        i += 2;
-        continue;
-      }
-      if (char === "&" && nxt === "&") {
-        tokenList.push({ line, type: 'LOGICAL_OP', lexeme: "&&" });
-        i += 2;
-        continue;
-      }
-
-      // Simple assignment operator: =
-      if (char === "=") {
-        tokenList.push({ line, type: 'ASSIGNMENT_OP', lexeme: "=" });
-        i++;
-        continue;
-      }
-
-      // Logical NOT operator: !
-      if (char === "!") {
-        tokenList.push({ line, type: 'LOGICAL_OP', lexeme: "!" });
-        i++;
-        continue;
-      }
-
-      // Relational comparison operators: <, >
-      if (char === "<" || char === ">") {
-        tokenList.push({ line, type: 'RELATIONAL_OP', lexeme: char });
-        i++;
-        continue;
-      }
-
-      // Arithmetic operators: +, -, *, /, %, ^
-      if ("+-*/%^".includes(char)) {
-        tokenList.push({ line, type: 'ARITHMETIC_OP', lexeme: char });
-        i++;
+        i = j;
         continue;
       }
 
       // Delimiters
-      //COMMA
-      if (char === ',') {
-        tokenList.push({ line, type: 'COMMA', lexeme: char });
+      const openerDelimiters = {
+        '(': TOKEN_TYPES.DELIMITER_LEFT_PAREN,
+        '[': TOKEN_TYPES.DELIMITER_LEFT_BRACKET,
+        '{': TOKEN_TYPES.DELIMITER_LEFT_BRACE,
+      };
+      const closerDelimiters = {
+        ')': { token: TOKEN_TYPES.DELIMITER_RIGHT_PAREN, match: '(' },
+        ']': { token: TOKEN_TYPES.DELIMITER_RIGHT_BRACKET, match: '[' },
+        '}': { token: TOKEN_TYPES.DELIMITER_RIGHT_BRACE, match: '{' },
+      };
+      const simpleDelimiters = {
+        ',': TOKEN_TYPES.DELIMITER_COMMA,
+        ':': TOKEN_TYPES.DELIMITER_COLON,
+        ';': TOKEN_TYPES.DELIMITER_SEMICOLON,
+      };
+
+      if (openerDelimiters[char]) {
+        tokenList.push({ line, type: openerDelimiters[char], lexeme: char });
+        delimiterStack.push({ char, line });
         i++;
         continue;
       }
 
-      //COLON
-      if (char === ':') {
-        tokenList.push({ line, type: 'COLON', lexeme: ':' });
+      if (closerDelimiters[char]) {
+        tokenList.push({ line, type: closerDelimiters[char].token, lexeme: char });
+        const expected = closerDelimiters[char].match;
+        const last = delimiterStack.pop();
+        if (!last || last.char !== expected) {
+          tokenList.push({
+            line,
+            type: TOKEN_TYPES.ERROR,
+            lexeme: `Unmatched ${char}`
+          });
+        }
         i++;
         continue;
       }
 
-      //LEFT PARENTHESIS
-      if (char === '(') {
-        tokenList.push({ line, type: 'LPAREN', lexeme: char });
-        i++;
-        continue;
-      }
-
-      //RIGHT PARENTHESIS
-      if (char === ')') {
-        tokenList.push({ line, type: 'RPAREN', lexeme: char });
-        i++;
-        continue;
-      }
-
-      //LEFT BRACKET
-      if (char === '[') {
-        tokenList.push({ line, type: 'LBRACKET', lexeme: char });
-        i++;
-        continue;
-      }
-
-      //RIGHT BRACKET
-      if (char === ']') {
-        tokenList.push({ line, type: 'RBRACKET', lexeme: char });
+      if (simpleDelimiters[char]) {
+        tokenList.push({ line, type: simpleDelimiters[char], lexeme: char });
         i++;
         continue;
       }
 
       // If we reach here, it's an unknown/unrecognized character
-      tokenList.push({ line, type: 'UNKNOWN', lexeme: char });
+      tokenList.push({ line, type: TOKEN_TYPES.UNKNOWN, lexeme: char });
       i++;
     }
+    // Any remaining unclosed delimiters -> errors
+    while (delimiterStack.length > 0) {
+      const unmatched = delimiterStack.pop();
+      tokenList.push({
+        line: unmatched.line,
+        type: TOKEN_TYPES.ERROR,
+        lexeme: `Unmatched ${unmatched.char}`
+      });
+    }
 
-    // At EOF: emit DEDENTs to return to baseline (0)
-    emitDedentsTo(0);
-
-    // Add end-of-file marker to indicate completion
-    tokenList.push({ line, type: 'EOF', lexeme: '' });
-        
     return tokenList;
   };
 
@@ -688,37 +676,38 @@ END`;
   // Token type to color mapping for UI display
   const getTokenTypeColor = (type) => {
     const colors = {
-      KEYWORD_PROGRAM: 'bg-indigo-100 text-indigo-800',
-      KEYWORD_DATATYPE: 'bg-blue-100 text-blue-800',
-      KEYWORD_LOOP: 'bg-indigo-200 text-indigo-800',
-      KEYWORD_CONDITIONAL: 'bg-indigo-300 text-indigo-900',
-      KEYWORD_RESERVED: 'bg-indigo-50 text-indigo-700',
-      NOISE_WORD: 'bg-lime-50 text-lime-700',
-      IDENTIFIER: 'bg-green-100 text-green-800',
-      NUMBER_LITERAL: 'bg-amber-100 text-amber-800',
-      DECIMAL_LITERAL: 'bg-amber-200 text-amber-900',
-      STRING_LITERAL: 'bg-amber-300 text-amber-900',
-      BOOLEAN_LITERAL: 'bg-amber-50 text-amber-700',
-      ASSIGNMENT_OP: 'bg-teal-600 text-teal-50',
-      ARITHMETIC_OP: 'bg-teal-100 text-teal-800',
-      UNARY_OP: 'bg-teal-200 text-teal-800',
-      LOGICAL_OP: 'bg-teal-300 text-teal-900',
-      RELATIONAL_OP: 'bg-teal-400 text-teal-900',
-      COMMENT_SINGLE: 'bg-emerald-50 text-emerald-700',
-      COMMENT_MULTI: 'bg-emerald-50 text-emerald-700',
-      STRING_INSERTION: 'text-yellow-700 bg-yellow-50',
-      LPAREN: 'bg-slate-100 text-slate-700',
-      RPAREN: 'bg-slate-100 text-slate-700',
-      LBRACKET: 'bg-slate-100 text-slate-700',
-      RBRACKET: 'bg-slate-100 text-slate-700',
-      COMMA: 'bg-slate-100 text-slate-700',
-      DELIMITER: 'bg-slate-100 text-slate-700',
-      WHITESPACE: 'bg-teal-50 text-teal-700',
-      NEWLINE: 'bg-violet-50 text-violet-700',
-      UNKNOWN: 'bg-red-100 text-red-800',
-      INDENT: 'bg-cyan-100 text-cyan-800',
-      DEDENT: 'bg-rose-50 text-rose-800',
-      EOF: 'bg-gray-100 text-gray-800',
+      KW_P: 'bg-indigo-100 text-indigo-800',
+      KW_T: 'bg-blue-100 text-blue-800',
+      KW_L: 'bg-indigo-200 text-indigo-800',
+      KW_C: 'bg-indigo-300 text-indigo-900',
+      KW_R: 'bg-indigo-50 text-indigo-700',
+      KW_START: 'bg-indigo-500 text-indigo-50',
+      KW_END: 'bg-indigo-500 text-indigo-50',
+      NW: 'bg-lime-50 text-lime-700',
+      ID: 'bg-green-100 text-green-800',
+      NUM: 'bg-amber-100 text-amber-800',
+      DEC: 'bg-amber-200 text-amber-900',
+      STR: 'bg-amber-300 text-amber-900',
+      BOOL: 'bg-amber-50 text-amber-700',
+      OP_ASG: 'bg-teal-600 text-teal-50',
+      OP_AR: 'bg-teal-100 text-teal-800',
+      OP_UN: 'bg-teal-200 text-teal-800',
+      OP_LOG: 'bg-teal-300 text-teal-900',
+      OP_REL: 'bg-teal-400 text-teal-900',
+      CMT: 'bg-emerald-50 text-emerald-700',
+      SIS: 'text-yellow-700 bg-yellow-50',
+      DEL: 'bg-slate-100 text-slate-700',
+      DEL_LPAR: 'bg-slate-100 text-slate-700',
+      DEL_RPAR: 'bg-slate-100 text-slate-700',
+      DEL_LBRACK: 'bg-slate-100 text-slate-700',
+      DEL_RBRACK: 'bg-slate-100 text-slate-700',
+      DEL_LBRACE: 'bg-slate-100 text-slate-700',
+      DEL_RBRACE: 'bg-slate-100 text-slate-700',
+      DEL_COL: 'bg-slate-100 text-slate-700',
+      DEL_COMMA: 'bg-slate-100 text-slate-700',
+      DEL_SEMI: 'bg-slate-100 text-slate-700',
+      UNK: 'bg-red-100 text-red-800',
+      ERR: 'bg-red-600 text-red-50',
     };
     return colors[type] || 'text-gray-700 bg-gray-50';
   };
@@ -804,9 +793,17 @@ END`;
                 Source Code Input
               </h2>
               <div className="flex items-center gap-2">
-                <button className="p-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition">
-                  <Sun className="w-5 h-5 dark:hidden" />
-                  <Moon className="w-5 h-5 hidden dark:block" />
+                <button 
+                  type="button"
+                  onClick={handleThemeToggle}
+                  aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+                  className="p-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+                >
+                  {isDarkMode ? (
+                    <Sun className="w-5 h-5 text-yellow-500" />
+                  ) : (
+                    <Moon className="w-5 h-5 text-slate-700" />
+                  )}
                 </button>
                 <button
                   onClick={loadSampleCode}
@@ -828,7 +825,8 @@ END`;
               value={sourceCode}
               onChange={setSourceCode}
               textareaRef={textareaRef}
-              className={"w-full h-full bg-transparent text-white font-mono text-sm leading-6 " +
+              onKeyDown={handleKeyDown}
+              className={"w-full h-full bg-transparent text-slate-900 dark:text-white font-mono text-sm leading-6 " +
                             "py-3 px-3 box-border rounded-md border border-blue-300 " +
                               "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
              }
@@ -864,7 +862,7 @@ END`;
               Token Analysis Results
             </h2>
 
-             <div className="h-[500px] sm:h-[520px] overflow-auto rounded-xl bg-transparent text-slate-50 p-4 font-mono text-sm border border-slate-700 shadow-inner">
+             <div className="h-[500px] sm:h-[520px] overflow-auto rounded-xl bg-transparent text-slate-900 dark:text-slate-50 p-4 font-mono text-sm border border-slate-700 shadow-inner">
               {tokens.length === 0 ? (
                 <div className="min-h-[200px] flex items-center justify-center text-gray-400">
                   <div className="text-center px-4">
@@ -875,24 +873,24 @@ END`;
                 </div>
               ) : (
                 <div className="border border-gray-300 rounded-md bg-transparent h-full overflow-auto">
-                  <table className="w-full text-xs sm:text-sm min-w-[600px]">
+                  <table className="w-full text-xs sm:text-sm min-w-[600px] text-left">
                     <thead className="bg-slate-900/70 sticky top-0 z-10">
                       <tr>
-                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-left font-semibold text-gray-200 border-b border-gray-700 whitespace-nowrap">Line No.</th>
-                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-left font-semibold text-gray-200 border-b border-gray-700 whitespace-nowrap">Token Type</th>
-                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-left font-semibold text-gray-200 border-b border-gray-700">Lexeme</th>
+                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 font-semibold text-slate-800 dark:text-gray-200 border-b border-gray-700 whitespace-nowrap">Line No.</th>
+                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 font-semibold text-slate-800 dark:text-gray-200 border-b border-gray-700 whitespace-nowrap">Token Type</th>
+                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 font-semibold text-slate-800 dark:text-gray-200 border-b border-gray-700">Lexeme</th>
                       </tr>
                     </thead>
                     <tbody>
                       {tokens.map((token, index) => (
-                        <tr key={index} className="border-b border-gray-700 hover:bg-slate-800 transition-colors">
-                          <td className="px-2 sm:px-3 md:px-4 py-2 text-gray-300 font-mono whitespace-nowrap">{token.line}</td>
+                        <tr key={index} className="border-b border-gray-200 dark:border-gray-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                          <td className="px-2 sm:px-3 md:px-4 py-2 text-slate-800 dark:text-gray-300 font-mono whitespace-nowrap">{token.line}</td>
                           <td className="px-2 sm:px-3 md:px-4 py-2">
                             <span className={`px-2 py-1 sm:px-3 rounded-md text-xs font-semibold inline-block ${getTokenTypeColor(token.type)}`}>
                               {token.type}
                             </span>
                           </td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2 font-mono text-gray-200 break-words break-all">{token.lexeme}</td>
+                          <td className="px-2 sm:px-3 md:px-4 py-2 font-mono text-slate-900 dark:text-gray-200 break-words break-all">{token.lexeme}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -907,35 +905,38 @@ END`;
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-slate-200 mb-3 sm:mb-4 text-center">Token Type Legend</h3>
               <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
                 {[
-                  { type: 'KEYWORD_PROGRAM', label: 'Program Keywords' },
-                  { type: 'KEYWORD_LOOP', label: 'Loop Keywords' },
-                  { type: 'KEYWORD_CONDITIONAL', label: 'Conditionals' },
-                  { type: 'KEYWORD_RESERVED', label: 'Reserved Words' },
-                  { type: 'KEYWORD_DATATYPE', label: 'Data Types' },
-                  { type: 'STRING_LITERAL', label: 'Strings' },
-                  { type: 'NUMBER_LITERAL', label: 'Numbers' },
-                  { type: 'DECIMAL_LITERAL', label: 'Decimals' },
-                  { type: 'BOOLEAN_LITERAL', label: 'Booleans' },
-                  { type: 'ARITHMETIC_OP', label: 'Arithmetic' },
-                  { type: 'ASSIGNMENT_OP', label: 'Assignment' },
-                  { type: 'LOGICAL_OP', label: 'Logical' },
-                  { type: 'RELATIONAL_OP', label: 'Relational' },
-                  { type: 'UNARY_OP', label: 'Unary' },
-                  { type: 'IDENTIFIER', label: 'Identifiers' },
-                  { type: 'COMMENT_SINGLE', label: 'Single-line Comments //' },
-                  { type: 'COMMENT_MULTI', label: 'Multi-line Comments /* */' },
-                  { type: 'LPAREN', label: 'Left Paren (' },
-                  { type: 'RPAREN', label: 'Right Paren )' },
-                  { type: 'LBRACKET', label: 'Left Bracket [' },
-                  { type: 'RBRACKET', label: 'Right Bracket ]' },
-                  { type: 'COMMA', label: 'Comma' },
-                  { type: 'STRING_INSERTION', label: 'String Insertion (@)' },
-                  { type: 'NOISE_WORD', label: 'Noise Words' },
-                  { type: 'WHITESPACE', label: 'Whitespace' },
-                  { type: 'NEWLINE', label: 'Newline' },
-                  { type: 'INDENT', label: 'INDENT' },
-                  { type: 'DEDENT', label: 'DEDENT' },
-                  { type: 'UNKNOWN', label: 'Unknown' },
+                  { type: 'KW_START', label: 'Start Keyword (KW_START)' },
+                  { type: 'KW_END', label: 'End Keyword (KW_END)' },
+                  { type: 'KW_P', label: 'Program Keywords (KW_P)' },
+                  { type: 'KW_L', label: 'Loop Keywords (KW_L)' },
+                  { type: 'KW_C', label: 'Conditionals (KW_C)' },
+                  { type: 'KW_R', label: 'Reserved Words (KW_R)' },
+                  { type: 'KW_T', label: 'Data Types (KW_T)' },
+                  { type: 'ID', label: 'Identifiers (ID)' },
+                  { type: 'NUM', label: 'Numbers (NUM)' },
+                  { type: 'DEC', label: 'Decimals (DEC)' },
+                  { type: 'STR', label: 'Strings (STR)' },
+                  { type: 'BOOL', label: 'Booleans (BOOL)' },
+                  { type: 'OP_AR', label: 'Arithmetic Operators (OP_AR)' },
+                  { type: 'OP_ASG', label: 'Assignment Operators (OP_ASG)' },
+                  { type: 'OP_LOG', label: 'Logical Operators (OP_LOG)' },
+                  { type: 'OP_REL', label: 'Relational Operators (OP_REL)' },
+                  { type: 'OP_UN', label: 'Unary Operators (OP_UN)' },
+                  { type: 'DEL_COMMA', label: 'Delimiter Comma , (DEL_COMMA)' },
+                  { type: 'DEL_COL', label: 'Delimiter Colon : (DEL_COL)' },
+                  { type: 'DEL_LPAR', label: 'Delimiter Left Parenthesis (DEL_LPAR)' },
+                  { type: 'DEL_RPAR', label: 'Delimiter Right Parenthesis (DEL_RPAR)' },
+                  { type: 'DEL_LBRACK', label: 'Delimiter Left Bracket [ (DEL_LBRACK)' },
+                  { type: 'DEL_RBRACK', label: 'Delimiter Right Bracket ] (DEL_RBRACK)' },
+                  { type: 'DEL_LBRACE', label: 'Delimiter Left Brace { (DEL_LBRACE)' },
+                  { type: 'DEL_RBRACE', label: 'Delimiter Right Brace } (DEL_RBRACE)' },
+                  { type: 'DEL_SEMI', label: 'Delimiter Semicolon ; (DEL_SEMI)' },
+                  { type: 'DEL', label: 'Other Delimiters (DEL)' },
+                  { type: 'CMT', label: 'Comments //, /* */ (CMT)' },
+                  { type: 'SIS', label: 'String Insertion (@) (SIS)' },
+                  { type: 'NW', label: 'Noise Words (NW)' },
+                  { type: 'UNK', label: 'Unknown (UNK)' },
+                  { type: 'ERR', label: 'Error Tokens (ERR)' }
                 ].map((item) => (
                   <span
                     key={item.type}

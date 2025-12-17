@@ -5,6 +5,7 @@ export default function LineNumberedTextarea({
   onChange = () => {},
   textareaRef,
   className = "",
+  onKeyDown,
 }) {
   const internalTextareaRef = useRef(null);
   const gutterRef = useRef(null);
@@ -56,10 +57,11 @@ export default function LineNumberedTextarea({
         ref={internalTextareaRef}
         value={value}
         onChange={handleChange}
+        onKeyDown={onKeyDown}
         onScroll={handleScroll}
         spellCheck={false}
         className={
-          "flex-1 resize-none bg-transparent text-white font-mono text-sm leading-6 py-3 px-3 outline-none focus:outline-none box-border " +
+          "flex-1 resize-none bg-transparent text-slate-900 dark:text-white font-mono text-sm leading-6 py-3 px-3 outline-none focus:outline-none box-border " +
           className
         }
         style={{ minHeight: 0, lineHeight: "1.5rem" }}
