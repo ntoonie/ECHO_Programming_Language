@@ -64,7 +64,11 @@ export default function LineNumberedTextarea({
           "flex-1 resize-none bg-transparent text-slate-900 dark:text-white font-mono text-sm leading-6 py-3 px-3 outline-none focus:outline-none box-border " +
           className
         }
-        style={{ minHeight: 0, lineHeight: "1.5rem" }}
+        style={{
+          minHeight: 0,
+          lineHeight: "1.5rem",
+          tabSize: 4,
+        }}
       />
     </div>
   );

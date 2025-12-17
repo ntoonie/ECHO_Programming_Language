@@ -605,15 +605,15 @@ string name = "Alice"
 boolean flag = true
 
 if x > 5
- echo "x is greater than 5"
+\techo "x is greater than 5"
 end if
 
 for i = 1 to 10
- echo "Count: @i"
+\techo "Count: @i"
 end for
 
 function number add(number a, number b)
- return a + b
+\treturn a + b
 end function
 
 echo "Result: @x"
@@ -637,34 +637,34 @@ struct CustomerRecord :
 // Bound Functions
 
 function validateAge(value)
- if value >= 18 then
-  return true
- else
-  error("Age must be 18 or older.") 
-   return false 
- end if
+\tif value >= 18 then
+\t\treturn true
+\telse
+\t\terror("Age must be 18 or older.") 
+\t\treturn false 
+\tend if
 end function
 
 function capitalizeName(value)
- return capitalizeEachWord(value) 
+\treturn capitalizeEachWord(value) 
 end function
 
 function validateZipCode(value)
- if length(value) == 5 then
-  return true
- else
-  error("ZipCode must be 5 digits.") 
-   return false
- end if
+\tif length(value) == 5 then
+\t\treturn true
+\telse
+\t\terror("ZipCode must be 5 digits.") 
+\t\treturn false
+\tend if
 end function
 
 // Scenario 1: Successful creation and transformation
 
 // Input Name is lowercase ("jane doe")
 myCustomer = CustomerRecord new:
- Name: "jane doe",
- Age: 25,
- ZipCode: "90210"
+\tName: "jane doe",
+\tAge: 25,
+\tZipCode: "90210"
 
 echo "Transformed Name in Object: @myCustomer.Name" // Output: Jane Doe
 echo "Age: @myCustomer.Age"
@@ -675,9 +675,9 @@ echo "ZipCode: @myCustomer.ZipCode"
 // This operation would typically trigger a runtime error in ECHO
 
 youngCustomer = CustomerRecord new:
- Name: "Billy",
- Age: 16,  // Fails validateAge
- ZipCode: "12345"
+\tName: "Billy",
+\tAge: 16,  // Fails validateAge
+\tZipCode: "12345"
 
 echo "Object creation status: FAILED"
 
@@ -917,11 +917,11 @@ END`;
               ) : (
                 <div className="border border-gray-300 rounded-md bg-transparent h-full overflow-auto">
                   <table className="w-full text-xs sm:text-sm min-w-[600px] text-left">
-                    <thead className="bg-slate-900/70 sticky top-0 z-10">
+                    <thead className="bg-white/60 dark:bg-slate-900/70 sticky top-0 z-10 backdrop-blur">
                       <tr>
-                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 font-semibold text-slate-800 dark:text-gray-200 border-b border-gray-700 whitespace-nowrap">Line No.</th>
-                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 font-semibold text-slate-800 dark:text-gray-200 border-b border-gray-700 whitespace-nowrap">Token Type</th>
-                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 font-semibold text-slate-800 dark:text-gray-200 border-b border-gray-700">Lexeme</th>
+                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 font-semibold text-slate-800 dark:text-gray-200 border-b border-slate-300 dark:border-gray-700 whitespace-nowrap">Line No.</th>
+                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 font-semibold text-slate-800 dark:text-gray-200 border-b border-slate-300 dark:border-gray-700 whitespace-nowrap">Token Type</th>
+                        <th className="px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 font-semibold text-slate-800 dark:text-gray-200 border-b border-slate-300 dark:border-gray-700">Lexeme</th>
                       </tr>
                     </thead>
                     <tbody>
