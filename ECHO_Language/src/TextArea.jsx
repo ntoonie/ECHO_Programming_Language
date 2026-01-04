@@ -1,3 +1,7 @@
+// ============================================================================
+// Line-Numbered Textarea Component
+// ============================================================================
+
 import React, { useEffect, useRef, useState } from "react";
 
 export default function LineNumberedTextarea({
@@ -16,11 +20,9 @@ export default function LineNumberedTextarea({
     setLines(count);
   }, [value]);
 
-
   const handleScroll = (e) => {
     if (gutterRef.current) gutterRef.current.scrollTop = e.target.scrollTop;
   };
-
 
   useEffect(() => {
     if (!textareaRef) return;
@@ -32,12 +34,10 @@ export default function LineNumberedTextarea({
   }, [textareaRef]);
 
   const handleChange = (e) => onChange(e.target.value);
-
   const lineNumbers = Array.from({ length: lines }, (_, i) => i + 1);
 
   return (
     <div className="w-full h-full flex overflow-hidden rounded-md border border-slate-700 bg-transparent box-border">
-
       <div
         ref={gutterRef}
         className="select-none bg-transparent text-slate-400 font-mono text-sm leading-6 py-3 px-3 overflow-hidden box-border"

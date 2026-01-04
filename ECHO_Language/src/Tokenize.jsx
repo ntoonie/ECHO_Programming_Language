@@ -1,9 +1,7 @@
-// A tokenizer that implements Python-like NEWLINE + INDENT/DEDENT behavior.
-// Usage: tokenizeWithIndent(sourceCode, keywordsMap)
-// - keywordsMap: object mapping lowercased keyword -> token type string (e.g. { start: 'KEYWORD_PROGRAM', number: 'KEYWORD_DATATYPE', ... })
-// Returns an array of tokens: { line, type, lexeme }
+// Alternative Tokenizer - Python-like NEWLINE + INDENT/DEDENT behavior
 const TAB_SIZE = 8;
 
+// Helper Functions
 function computeIndentColumns(slice) {
   let cols = 0;
   for (let ch of slice) {
@@ -17,12 +15,14 @@ function isDigit(c) { return /[0-9]/.test(c); }
 function isAlpha(c) { return /[A-Za-z_]/.test(c); }
 function isAlphaNum(c) { return /[A-Za-z0-9_]/.test(c); }
 
+// Main Tokenizer Function
 export default function tokenizeWithIndent(input, keywordsMap = {}) {
   const tokens = [];
   const len = input.length;
   let i = 0;
   let line = 1;
 
+  // Indentation Tracking
   const indentStack = [0];
   let parenDepth = 0;
 
