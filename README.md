@@ -8,21 +8,6 @@
 [![Status](https://img.shields.io/badge/Status-Active-green.svg)](https://github.com)
 [![License](https://img.shields.io/badge/License-Educational-yellow.svg)](https://github.com)
 
-```
-╔═══════════════════════════════════════════════════════════════╗
-║                                                               ║
-║     ███████╗ ██████╗██╗  ██╗ ██████╗                          ║
-║     ██╔════╝██╔════╝██║  ██║██╔═══██╗                         ║
-║     █████╗  ██║     ███████║██║   ██║                         ║
-║     ██╔══╝  ██║     ██╔══██║██║   ██║                         ║
-║     ███████╗╚██████╗██║  ██║╚██████╔╝                         ║
-║     ╚══════╝ ╚═════╝╚═╝  ╚═╝ ╚═════╝                          ║
-║                                                               ║
-║         Executable Code, Human Output                         ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
-```
-
 *A modern, readable programming language designed for clarity and expressiveness*
 
 ---
