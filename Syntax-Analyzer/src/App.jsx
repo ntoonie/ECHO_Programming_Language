@@ -1,10 +1,10 @@
 import React from 'react';
-import ECHOSyntaxAnalyzer from './ECHO_SyntaxAnalyzer';
+import SyntaxDashboard from './components/SyntaxDashboard';
 
 function App() {
   return (
     <div>
-      <ECHOSyntaxAnalyzer />
+      <SyntaxDashboard />
     </div>
   );
 }

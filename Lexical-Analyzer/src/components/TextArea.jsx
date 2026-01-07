@@ -1,10 +1,12 @@
-// ============================================================================
-// Line-Numbered Textarea Component
-// ============================================================================
+/**
+ * =========================================
+ * Title: Text Area – Line-Numbered Editor
+ * =========================================
+ */
 
 import React, { useEffect, useRef, useState } from "react";
 
-export default function LineNumberedTextarea({
+export default function TextArea({
   value = "",
   onChange = () => {},
   textareaRef,
@@ -20,11 +22,13 @@ export default function LineNumberedTextarea({
     setLines(count);
   }, [value]);
 
+  // Synchronize gutter scroll with textarea.
   const handleScroll = (e) => {
     if (gutterRef.current) gutterRef.current.scrollTop = e.target.scrollTop;
   };
 
   useEffect(() => {
+    // Forward internal ref to parent.
     if (!textareaRef) return;
     if (typeof textareaRef === "function") {
       textareaRef(internalTextareaRef.current);
