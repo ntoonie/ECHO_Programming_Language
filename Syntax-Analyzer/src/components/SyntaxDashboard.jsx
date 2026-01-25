@@ -1,24 +1,30 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { PlayCircle, Trash2, Sun, Moon, Upload } from 'lucide-react';
 import TextArea from './TextArea';
 import ErrorConsole from './ErrorConsole';
+import AbstractSyntaxTree from './AbstractSyntaxTree';
 import { useTheme } from '../hooks/useTheme';
 import { useDashboard } from '../hooks/useDashboard';
 import { getAllSamples } from '../data/codeSamples';
 
-/**
- * =========================================
- * Syntax Dashboard – Main Application View
- * =========================================
- */
+/*
+Syntax Dashboard – Main Application View
+
+Main dashboard component that orchestrates the syntax analyzer interface with code editor, error console, and AST visualization.
+Depends on React, framer-motion, lucide-react icons, and custom hooks.
+*/
 
 const SyntaxDashboard = () => {
   const { isDarkMode, handleThemeToggle } = useTheme();
+  const [activeTab, setActiveTab] = useState('errors'); // 'errors' or 'ast'
   const {
     sourceCode,
     errors,
+    warnings,
+    ast,
+    astValid,
     analyzing,
     history,
     historyIndex,
@@ -36,14 +42,13 @@ const SyntaxDashboard = () => {
     handleRedo,
     handleErrorClick,
     handleCopyToClipboard,
-    handleFormatCode,
     handleExportFile,
     loadSample
   } = useDashboard();
 
   const codeSamples = getAllSamples();
 
-  // Inject custom scrollbar styles for consistent appearance across browsers.
+  // Inject custom scrollbar styles for consistent appearance across browsers
   useEffect(() => {
     const styleId = 'custom-vertical-scrollbar-styles';
     if (document.getElementById(styleId)) return;
@@ -51,6 +56,7 @@ const SyntaxDashboard = () => {
     const style = document.createElement('style');
     style.id = styleId;
     style.textContent = `
+      // Custom scrollbar styles for webkit browsers
       .custom-vertical-scrollbar,
       .custom-vertical-scrollbar textarea {
         overflow-y: auto !important;
@@ -78,6 +84,7 @@ const SyntaxDashboard = () => {
         background: rgba(148, 163, 184, 0.7);
         background-clip: padding-box;
       }
+      // Dark mode scrollbar styles
       .dark .custom-vertical-scrollbar::-webkit-scrollbar-track,
       .dark textarea.custom-vertical-scrollbar::-webkit-scrollbar-track {
         background: rgba(71, 85, 105, 0.5);
@@ -94,6 +101,7 @@ const SyntaxDashboard = () => {
         background: rgba(100, 116, 139, 0.8);
         background-clip: padding-box;
       }
+      // Firefox scrollbar styles
       .custom-vertical-scrollbar,
       textarea.custom-vertical-scrollbar {
         scrollbar-width: thin;
@@ -190,7 +198,7 @@ const SyntaxDashboard = () => {
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileUpload}
-                  accept=".txt"
+                  accept=".txt,.echo"
                   style={{ display: 'none' }}
                 />
               </div>
@@ -205,7 +213,7 @@ const SyntaxDashboard = () => {
                 errors={errors}
                 highlightedLine={selectedErrorLine}
                 onCopy={handleCopyToClipboard}
-                onFormat={handleFormatCode}
+                onClear={handleClear}
                 onExport={handleExportFile}
                 showCopiedTooltip={showCopiedTooltip}
                 className="w-full h-full bg-transparent text-slate-900 dark:text-white font-mono text-sm leading-6 py-3 px-3 box-border rounded-md border border-emerald-300 dark:border-violet-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-violet-500 focus:border-emerald-500 dark:focus:border-violet-500 resize-none custom-vertical-scrollbar"
@@ -258,16 +266,49 @@ const SyntaxDashboard = () => {
             className="bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/30 dark:border-slate-700 flex flex-col h-[850px]"
           >
             <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-4 flex-shrink-0">
-              Error Console
+              Analysis Results
             </h2>
+
+            {/* Tabs */}
+            <div className="flex gap-2 mb-4 flex-shrink-0 border-b border-slate-300 dark:border-slate-600">
+              <button
+                onClick={() => setActiveTab('ast')}
+                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+                  activeTab === 'ast'
+                    ? 'border-violet-600 dark:border-violet-400 text-violet-600 dark:text-violet-400'
+                    : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                Abstract Syntax Tree
+              </button>
+              <button
+                onClick={() => setActiveTab('errors')}
+                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${
+                  activeTab === 'errors'
+                    ? 'border-violet-600 dark:border-violet-400 text-violet-600 dark:text-violet-400'
+                    : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                Analysis Results
+              </button>
+            </div>
 
             <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
               <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-vertical-scrollbar">
-                <ErrorConsole 
-                  errors={errors} 
-                  onErrorClick={handleErrorClick}
-                  metrics={analysisMetrics}
-                />
+                {activeTab === 'ast' ? (
+                  <AbstractSyntaxTree 
+                    ast={ast}
+                    sourceCode={sourceCode}
+                  />
+                ) : (
+                  <ErrorConsole 
+                    errors={errors} 
+                    warnings={warnings}
+                    onErrorClick={handleErrorClick}
+                    metrics={analysisMetrics}
+                    astValid={astValid}
+                  />
+                )}
               </div>
             </div>
           </motion.div>

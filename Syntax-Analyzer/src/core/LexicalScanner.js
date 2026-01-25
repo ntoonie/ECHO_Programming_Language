@@ -1,14 +1,34 @@
-import { TOKEN_TYPES, KEYWORDS } from './TokenTypes';
+import { TOKEN_TYPES, KEYWORDS } from '../../../shared/tokenTypes';
 
-/**
- * =========================================
- * Lexical Scanner – Token Analysis
- * =========================================
- */
+/*
+Lexical Scanner – Token Analysis
 
+Performs lexical analysis on ECHO language source code to generate tokens.
+Handles string interpolation, numbers, identifiers, operators, and comments.
+Depends on TokenTypes module.
+*/
+
+/*
+Check if character is a letter
+
+@param {String} c - Character to check
+@returns {Boolean} True if character is a letter
+*/
 const isLetter = (c) => /[A-Za-z]/.test(c);
+/*
+Check if character is a digit
+
+@param {String} c - Character to check
+@returns {Boolean} True if character is a digit
+*/
 const isDigit = (c) => /[0-9]/.test(c);
 
+/*
+Main lexical analyzer function
+
+@param {String} rawCode - Raw source code to analyze
+@returns {Array} Array of tokens with line/column information
+*/
 export const lexicalAnalyzer = (rawCode) => {
   let code = rawCode || '';
   const tokenList = [];
@@ -16,7 +36,7 @@ export const lexicalAnalyzer = (rawCode) => {
   let column = 1;
   let i = 0;
   
-  // Normalize whitespace to prevent invisible character issues.
+  // Normalize whitespace to prevent invisible character issues
   code = code.replace(/\u00A0/g, ' ');
   code = code.replace(/[\u200B-\u200D\uFEFF]/g, '');
 
@@ -55,7 +75,7 @@ export const lexicalAnalyzer = (rawCode) => {
         prevNonWhitespace = code[j];
       }
       
-      // Only treat '//' as comment if it starts a line to prevent conflict with division.
+      // Only treat '//' as comment if it starts a line to prevent conflict with division
       const isComment = prevNonWhitespace === null || 
                        prevNonWhitespace === '\n' || 
                        prevNonWhitespace === '\r';
@@ -108,7 +128,7 @@ export const lexicalAnalyzer = (rawCode) => {
       i++;
       
       while (i < code.length && code[i] !== '"') {
-        // Handle string interpolation (@variable) by splitting into separate tokens.
+        // Handle string interpolation (@variable) by splitting into separate tokens
         if (code[i] === '@') {
           if (currentSegment.length > 0) {
             tokenList.push({ 
@@ -139,9 +159,9 @@ export const lexicalAnalyzer = (rawCode) => {
           }
           
           tokenList.push({
-            line: line,
+            line,
             column: interpolationColumn,
-            type: TOKEN_TYPES.STRING_INSERTION,
+            type: TOKEN_TYPES.SIS_MARKER,
             lexeme: lexeme
           });
           
@@ -277,7 +297,7 @@ export const lexicalAnalyzer = (rawCode) => {
       tokenList.push({
         line,
         column: startColumn,
-        type: TOKEN_TYPES.STRING_INSERTION,
+        type: TOKEN_TYPES.SIS_MARKER,
         lexeme
       });
 
@@ -285,7 +305,7 @@ export const lexicalAnalyzer = (rawCode) => {
       continue;
     }
     
-    // Group consecutive operator characters then classify as single or double operators.
+    // Group consecutive operator characters then classify as single or double operators
     const operatorChars = "<>!=&|+-*/%^?";
     if (operatorChars.includes(char)) {
       const startColumn = column;
@@ -307,19 +327,23 @@ export const lexicalAnalyzer = (rawCode) => {
 
       if (run.length === 1 && singleOps.has(run)) {
         const type =
-          run === "=" ? TOKEN_TYPES.ASSIGNMENT_OP :
-          (run === "<" || run === ">") ? TOKEN_TYPES.RELATIONAL_OP :
-          run === "!" ? TOKEN_TYPES.LOGICAL_OP :
+          run === "=" ? TOKEN_TYPES.OP_ASSIGN :
+          run === "<" ? TOKEN_TYPES.OP_LT :
+          run === ">" ? TOKEN_TYPES.OP_GT :
+          run === "!" ? TOKEN_TYPES.OP_NOT :
           run === "?" ? TOKEN_TYPES.UNKNOWN :
-          TOKEN_TYPES.ARITHMETIC_OP;
+          TOKEN_TYPES.OP_ADD;
         tokenList.push({ line, column: startColumn, type, lexeme: run });
       } else if (run.length === 2 && doubleOps.has(run)) {
         const type =
-          ["<=", ">=", "==", "!="].includes(run) ? TOKEN_TYPES.RELATIONAL_OP :
-          ["++", "--"].includes(run) ? TOKEN_TYPES.UNARY_OP :
-          ["&&", "||"].includes(run) ? TOKEN_TYPES.LOGICAL_OP :
-          run === "//" ? TOKEN_TYPES.ARITHMETIC_OP :
-          TOKEN_TYPES.ASSIGNMENT_OP;
+          run === "<=" ? TOKEN_TYPES.OP_LTE :
+          run === ">=" ? TOKEN_TYPES.OP_GTE :
+          run === "==" ? TOKEN_TYPES.OP_EQ :
+          run === "!=" ? TOKEN_TYPES.OP_NEQ :
+          ["++", "--"].includes(run) ? TOKEN_TYPES.OP_INC :
+          ["&&", "||"].includes(run) ? TOKEN_TYPES.OP_AND :
+          run === "//" ? TOKEN_TYPES.OP_INT_DIV :
+          TOKEN_TYPES.OP_ASSIGN;
         tokenList.push({ line, column: startColumn, type, lexeme: run });
       } else {
         tokenList.push({ 
@@ -335,14 +359,15 @@ export const lexicalAnalyzer = (rawCode) => {
     }
 
     const delimiters = {
-      '(': TOKEN_TYPES.DELIMITER_LEFT_PAREN,
-      ')': TOKEN_TYPES.DELIMITER_RIGHT_PAREN,
-      '[': TOKEN_TYPES.DELIMITER_LEFT_BRACKET,
-      ']': TOKEN_TYPES.DELIMITER_RIGHT_BRACKET,
-      '{': TOKEN_TYPES.DELIMITER_LEFT_BRACE,
-      '}': TOKEN_TYPES.DELIMITER_RIGHT_BRACE,
-      ',': TOKEN_TYPES.DELIMITER_COMMA,
-      ':': TOKEN_TYPES.DELIMITER_COLON,
+      '(': TOKEN_TYPES.DEL_LPAREN,
+      ')': TOKEN_TYPES.DEL_RPAREN,
+      '[': TOKEN_TYPES.DEL_LBRACK,
+      ']': TOKEN_TYPES.DEL_RBRACK,
+      '{': TOKEN_TYPES.DEL_LBRACE,
+      '}': TOKEN_TYPES.DEL_RBRACE,
+      ',': TOKEN_TYPES.DEL_COMMA,
+      '.': TOKEN_TYPES.DEL_PERIOD,
+      ':': TOKEN_TYPES.DEL_PERIOD,
     };
 
     if (delimiters[char]) {
@@ -353,6 +378,7 @@ export const lexicalAnalyzer = (rawCode) => {
     }
 
     if (char === ';') {
+      // Check for prohibited semicolons (ECHO doesn't use semicolons)
       tokenList.push({ 
         line,
         column,

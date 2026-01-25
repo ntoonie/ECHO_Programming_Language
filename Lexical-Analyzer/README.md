@@ -1,38 +1,30 @@
 # 🎯 E.C.H.O Lexical Analyzer
-[![React](https://img.shields.io/badge/React-19.2.0-61DAFB?logo=react&logoColor=white)](https://react.dev)
-[![Vite](https://img.shields.io/badge/Vite-7.2.2-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1.17-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
-[![License](https://img.shields.io/badge/license-Educational-yellow.svg)](LICENSE)
+
+[![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=white)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
+[![Educational](https://img.shields.io/badge/Purpose-Educational-yellow.svg)](LICENSE)
 
 ---
 
-## 📖 Overview
-
-Real-time lexical analyzer that visualizes E.C.H.O source code tokenization. Built with **React 19** and **Vite 7** for instant feedback and educational clarity.
+Real-time lexical analyzer that transforms E.C.H.O source code into structured tokens for educational programming language development.
 
 ---
 
-## ✨ Features
+## 🚀 Features
 
-- ⚡ **Real-Time Tokenization** – Instant visual feedback as you type
-- 🎨 **Color-Coded Display** – Keywords, identifiers, operators, and literals
-- 📊 **Token Table View** – Line numbers, types, and lexemes at a glance
-- 🔖 **Interactive Legend** – Quick reference for token categories
-- 📱 **Fully Responsive** – Desktop, tablet, and mobile support
-- 🚀 **Sample Code Loader** – Pre-loaded examples for immediate testing
+- **Real-Time Tokenization** – Instant visual feedback as you type E.C.H.O source code
+- **Color-Coded Display** – Visual distinction between keywords, identifiers, operators, and literals
+- **Interactive Token Table** – Comprehensive view with line numbers, types, and lexemes
+- **Sample Code Library** – Pre-loaded examples for immediate testing and learning
+- **Responsive Design** – Seamless experience across desktop, tablet, and mobile devices
 
 ---
 
-## 🛠️ Installation & Setup
-
-### Prerequisites
-- **Node.js** ≥ 16.x
-- **npm** ≥ 7.x
-
-### Quick Start
+## ⚙️ Getting Started
 
 ```bash
-# Clone repository
+# Clone the repository
 git clone https://github.com/ntoonie/ECHO_Programming_Language.git
 cd ECHO_Programming_Language/Lexical-Analyzer
 
@@ -43,24 +35,59 @@ npm install
 npm run dev
 ```
 
-**Open** → `http://localhost:5173`
+> **Note:** The development server will automatically open at `http://localhost:5173`
 
-### Production Build
-```bash
-npm run build
-npm run preview
+---
+
+## 🛠️ Tech Stack
+
+| Language/Framework | Version | Purpose |
+|-------------------|---------|---------|
+| **React** | 19.2.0 | UI Framework |
+| **Vite** | 7.2.2 | Build Tool & Dev Server |
+| **Tailwind CSS** | 4.1.17 | Styling Framework |
+| **JavaScript** | ES6+ | Core Language |
+| **ESLint** | Latest | Code Quality |
+
+---
+
+## 📂 Project Structure
+
+```plaintext
+Lexical-Analyzer/
+├── public/
+│   └── vite.svg                 # Vite logo
+├── src/
+│   ├── components/
+│   │   ├── Editor.jsx           # Code input editor component
+│   │   ├── TokenTable.jsx       # Token display table
+│   │   └── Legend.jsx           # Token category reference
+│   ├── core/
+│   │   └── tokenizer.js         # Core tokenization logic
+│   ├── assets/                  # Static assets
+│   ├── App.jsx                  # Main application component
+│   ├── index.css                # Global styles
+│   └── main.jsx                 # Application entry point
+├── .gitignore                   # Git ignore rules
+├── README.md                    # This documentation
+├── eslint.config.js             # ESLint configuration
+├── index.html                   # HTML template
+├── package.json                 # Dependencies and scripts
+└── vite.config.js               # Vite build configuration
 ```
 
 ---
 
-## 🚀 Usage Guide
+## 📖 Usage Guide
 
-1. **Enter Code** – Type E.C.H.O source in the editor
-2. **Load Sample** – Click button for example code
-3. **Analyze** – Press "Analyze Code" to tokenize
-4. **Review** – Examine token table output
+### Basic Workflow
 
-### Example Code
+1. **Write Code** – Type your E.C.H.O source code in the editor
+2. **Load Examples** – Use sample code buttons for quick testing
+3. **Analyze** – Click "Analyze Code" to tokenize your input
+4. **Review Results** – Examine the structured token output
+
+### Example Usage
 
 ```echo
 start
@@ -71,59 +98,18 @@ start
 end
 ```
 
-### 🏷️ Token Categories
+> **Tip:** Use the sample code loader to explore different E.C.H.O language features and see how they're tokenized.
 
-| Category | Examples | Color |
-|----------|----------|-------|
-| **Keywords** | `start`, `end`, `number` | 🔵 Blue |
-| **Identifiers** | `x`, `sum` | 🟢 Green |
-| **Operators** | `+`, `-`, `=` | 🟠 Orange |
-| **Literals** | `42`, `"Hello"` | 🟣 Purple |
-| **Delimiters** | `(`, `)`, `,` | ⚫ Gray |
+### Token Categories Reference
 
----
-
-## 📂 Project Structure
-
-```plaintext
-Lexical-Analyzer/
-├── src/
-│   ├── components/
-│   │   ├── Editor.jsx          # Code input editor
-│   │   ├── TokenTable.jsx      # Token display
-│   │   └── Legend.jsx          # Token reference
-│   ├── lexer/
-│   │   └── tokenizer.js        # Tokenization logic
-│   ├── App.jsx                 # Main component
-│   └── main.jsx                # Entry point
-├── vite.config.js              # Vite configuration
-└── package.json                # Dependencies
-```
+| Category | Examples | Visual Color |
+|----------|----------|--------------|
+| **Keywords** | `start`, `end`, `number`, `if` | 🔵 Blue |
+| **Identifiers** | `x`, `sum`, `myVariable` | 🟢 Green |
+| **Operators** | `+`, `-`, `=`, `>` | 🟠 Orange |
+| **Literals** | `42`, `"Hello"`, `true` | 🟣 Purple |
+| **Delimiters** | `(`, `)`, `,`, `:` | ⚫ Gray |
 
 ---
 
-## 📦 Dependencies
-
-### Production
-- **React** `19.2.0` – UI framework
-- **React DOM** `19.2.0` – Rendering engine
-
-### Development
-- **Vite** `7.2.2` – Build tool & dev server
-- **@vitejs/plugin-react** `4.2.0` – React integration
-- **ESLint** – Code quality
-
-```bash
-npm install react@19.2.0 react-dom@19.2.0
-npm install -D vite@7.2.2 @vitejs/plugin-react
-```
-
----
-
-<div align="center">
-
-**Built with React, Vite, and Tailwind CSS**
-
-Educational project
-
-</div>
+> This lexical analyzer is designed as an educational tool to help students understand how programming languages parse and tokenize source code. It provides immediate visual feedback to make the abstract concept of lexical analysis concrete and interactive.

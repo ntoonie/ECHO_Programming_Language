@@ -3,8 +3,10 @@ import SyntaxDashboard from './components/SyntaxDashboard';
 
 function App() {
   return (
-    <div>
-      <SyntaxDashboard />
+    <div className="app-container">
+      <div className="app-content">
+        <SyntaxDashboard />
+      </div>
     </div>
   );
 }

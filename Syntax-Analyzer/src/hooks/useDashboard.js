@@ -1,17 +1,23 @@
 import { useState, useRef, useCallback } from 'react';
 import { lexicalAnalyzer } from '../core/LexicalScanner';
 import { syntaxAnalyzer } from '../core/SyntaxAnalyzer';
+import { TOKEN_TYPES } from '../../../shared/tokenTypes';
 import { getSampleById } from '../data/codeSamples';
 
 /**
- * =========================================
- * Dashboard Hook – State and Event Logic
- * =========================================
+ * Dashboard Hook
+ * 
+ * Manages state and event logic for the syntax analyzer dashboard.
+ * Handles code editing, analysis, history, and file operations.
+ * Dependencies: React hooks, LexicalScanner, SyntaxAnalyzer, tokenTypes, codeSamples
  */
 
 export const useDashboard = () => {
   const [sourceCode, setSourceCode] = useState('');
   const [errors, setErrors] = useState([]);
+  const [warnings, setWarnings] = useState([]);
+  const [ast, setAst] = useState(null);
+  const [astValid, setAstValid] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [history, setHistory] = useState([{ code: '', timestamp: Date.now() }]);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -26,7 +32,7 @@ export const useDashboard = () => {
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Add new code state to history for undo/redo functionality.
+  // Add new code state to history for undo/redo functionality
   const addToHistory = useCallback((code) => {
     const newHistory = history.slice(0, historyIndex + 1);
     newHistory.push({ code, timestamp: Date.now() });
@@ -78,7 +84,7 @@ export const useDashboard = () => {
     const tokens = lexicalAnalyzer(sourceCode);
     let formattedCode = '';
     let depth = 0;
-    const INDENT = '    '; // 4 spaces per indent level
+    const INDENT = '    ';  // 4 spaces per indent level
     
     let currentLine = [];
     let lastWasDeclaration = false;
@@ -173,7 +179,7 @@ export const useDashboard = () => {
         if (nextLower && ['if', 'for', 'while', 'function'].includes(nextLower)) {
           currentLine.push(' ');
           currentLine.push(nextToken.lexeme);
-          i++; // Skip next token
+          i++;  // Skip next token
         }
         
         flushLine();
@@ -271,7 +277,7 @@ export const useDashboard = () => {
         
         flushLine();
         lastWasDeclaration = false;
-        i = j - 1; // Update main loop counter
+        i = j - 1;  // Update main loop counter
         continue;
       }
       
@@ -335,7 +341,7 @@ export const useDashboard = () => {
     URL.revokeObjectURL(url);
   }, [sourceCode]);
 
-  // Perform lexical and syntax analysis on source code.
+  // Perform lexical and syntax analysis on source code
   const handleAnalyze = useCallback(() => {
     setAnalyzing(true);
     setTimeout(() => {
@@ -344,19 +350,21 @@ export const useDashboard = () => {
       
       const tokens = lexicalAnalyzer(sourceCode);
       
-      // Scanner now only tokenizes - all validation happens in syntax analyzer.
-      // Check for UNKNOWN tokens and report them.
+      // Scanner now only tokenizes - all validation happens in syntax analyzer
+      // Check for UNKNOWN tokens and report them
       const unknownTokenErrors = tokens
-        .filter(token => token.type === 'UNK')
+        .filter(token => token.type === TOKEN_TYPES.UNKNOWN)
         .map((token, index) => ({
           id: `lex-${index}`,
           line: token.line,
-          column: 1,
-          message: `Unknown or invalid token: '${token.lexeme}'`
+          column: token.column || 1,
+          message: `Unknown or invalid token: '${token.lexeme}'`,
+          category: 'General',
+          severity: 'error'
         }));
       
-      // Run syntax analyzer on all tokens (including unknown ones).
-      const syntaxErrors = syntaxAnalyzer(tokens);
+      // Run syntax analyzer on all tokens (including unknown ones)
+      const syntaxResult = syntaxAnalyzer(tokens);
       
       // End performance measurement
       const endTime = performance.now();
@@ -375,11 +383,14 @@ export const useDashboard = () => {
         performanceTime: parseFloat(performanceTime)
       });
       
-      // Combine all errors and sort by line number.
-      const allErrors = [...unknownTokenErrors, ...syntaxErrors];
+      // Combine all errors and sort by line number
+      const allErrors = [...unknownTokenErrors, ...(syntaxResult.errors || [])];
       allErrors.sort((a, b) => a.line - b.line);
       
       setErrors(allErrors);
+      setWarnings(syntaxResult.warnings || []);
+      setAst(syntaxResult.ast);
+      setAstValid(syntaxResult.astValid || false);
       setAnalyzing(false);
     }, 300);
   }, [sourceCode]);
@@ -387,6 +398,9 @@ export const useDashboard = () => {
   const handleClear = () => {
     handleSourceCodeChange('');
     setErrors([]);
+    setWarnings([]);
+    setAst(null);
+    setAstValid(false);
     setHistory([{ code: '', timestamp: Date.now() }]);
     setHistoryIndex(0);
     setAnalysisMetrics({
@@ -411,7 +425,7 @@ export const useDashboard = () => {
   };
 
   const handleKeyDown = (e) => {
-    // Insert tab character instead of changing focus.
+    // Insert tab character instead of changing focus
     if (e.key === 'Tab') {
       e.preventDefault();
       const textarea = e.target;
@@ -431,7 +445,7 @@ export const useDashboard = () => {
       return;
     }
     
-    // Handle Ctrl+Z (undo) and Ctrl+Y/Ctrl+Shift+Z (redo).
+    // Handle Ctrl+Z (undo) and Ctrl+Y/Ctrl+Shift+Z (redo)
     if (e.ctrlKey || e.metaKey) {
       if (e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
@@ -466,6 +480,9 @@ export const useDashboard = () => {
   return {
     sourceCode,
     errors,
+    warnings,
+    ast,
+    astValid,
     analyzing,
     history,
     historyIndex,

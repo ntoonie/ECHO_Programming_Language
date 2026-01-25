@@ -120,7 +120,7 @@ export function lexicalAnalyzer(rawCode) {
             }
           }
 
-          tokenList.push({ line, type: TOKEN_TYPES.STRING_INSERTION, lexeme });
+          tokenList.push({ line, type: TOKEN_TYPES.SIS_MARKER, lexeme });
           i = j;
           continue;
         }
@@ -274,39 +274,110 @@ export function lexicalAnalyzer(rawCode) {
           j++;
         }
       }
-      tokenList.push({ line, type: TOKEN_TYPES.STRING_INSERTION, lexeme });
+      tokenList.push({ line, type: TOKEN_TYPES.SIS_MARKER, lexeme });
       i = j;
       continue;
     }
 
     if (char === '=') {
-      // Distinguish assignment from equality.
+      // Distinguish assignment from equality and compound assignments
       if (code[i + 1] === '=') {
-        tokenList.push({ line, type: TOKEN_TYPES.RELATIONAL_OP, lexeme: '==' });
+        tokenList.push({ line, type: TOKEN_TYPES.OP_EQ, lexeme: '==' });
         i += 2;
+      } else if (code[i + 1] === '+' && code[i + 2] === '=') {
+        tokenList.push({ line, type: TOKEN_TYPES.OP_ADD_ASSIGN, lexeme: '+=' });
+        i += 3;
+      } else if (code[i + 1] === '-' && code[i + 2] === '=') {
+        tokenList.push({ line, type: TOKEN_TYPES.OP_SUB_ASSIGN, lexeme: '-=' });
+        i += 3;
+      } else if (code[i + 1] === '*' && code[i + 2] === '=') {
+        tokenList.push({ line, type: TOKEN_TYPES.OP_MUL_ASSIGN, lexeme: '*=' });
+        i += 3;
+      } else if (code[i + 1] === '/' && code[i + 2] === '=') {
+        tokenList.push({ line, type: TOKEN_TYPES.OP_DIV_ASSIGN, lexeme: '/=' });
+        i += 3;
+      } else if (code[i + 1] === '%' && code[i + 2] === '=') {
+        tokenList.push({ line, type: TOKEN_TYPES.OP_MOD_ASSIGN, lexeme: '%=' });
+        i += 3;
       } else {
-        tokenList.push({ line, type: TOKEN_TYPES.ASSIGNMENT_OP, lexeme: '=' });
+        tokenList.push({ line, type: TOKEN_TYPES.OP_ASSIGN, lexeme: '=' });
         i++;
       }
       continue;
     }
 
-    if ('+-*/%'.includes(char)) {
-      // Pack ++/-- as unary operators.
+    if ('+-*/%^'.includes(char)) {
+      // Handle compound operators and special cases
       const nextChar = code[i + 1];
+      const nextNextChar = code[i + 2];
+      
+      // Compound assignment operators (handled above, but also catch here)
+      if (char === '+' && nextChar === '=' && nextNextChar !== '=') {
+        tokenList.push({ line, type: TOKEN_TYPES.OP_ADD_ASSIGN, lexeme: '+=' });
+        i += 2;
+        continue;
+      }
+      if (char === '-' && nextChar === '=' && nextNextChar !== '=') {
+        tokenList.push({ line, type: TOKEN_TYPES.OP_SUB_ASSIGN, lexeme: '-=' });
+        i += 2;
+        continue;
+      }
+      if (char === '*' && nextChar === '=' && nextNextChar !== '=') {
+        tokenList.push({ line, type: TOKEN_TYPES.OP_MUL_ASSIGN, lexeme: '*=' });
+        i += 2;
+        continue;
+      }
+      if (char === '/' && nextChar === '=' && nextNextChar !== '=') {
+        tokenList.push({ line, type: TOKEN_TYPES.OP_DIV_ASSIGN, lexeme: '/=' });
+        i += 2;
+        continue;
+      }
+      if (char === '%' && nextChar === '=' && nextNextChar !== '=') {
+        tokenList.push({ line, type: TOKEN_TYPES.OP_MOD_ASSIGN, lexeme: '%=' });
+        i += 2;
+        continue;
+      }
+      
+      // Increment/Decrement operators
       if (char === '+' && nextChar === '+') {
-        tokenList.push({ line, type: TOKEN_TYPES.UNARY_OP, lexeme: '++' });
+        tokenList.push({ line, type: TOKEN_TYPES.OP_INC, lexeme: '++' });
         i += 2;
         continue;
       }
       if (char === '-' && nextChar === '-') {
-        tokenList.push({ line, type: TOKEN_TYPES.UNARY_OP, lexeme: '--' });
+        tokenList.push({ line, type: TOKEN_TYPES.OP_DEC, lexeme: '--' });
         i += 2;
         continue;
       }
-      tokenList.push({ line, type: TOKEN_TYPES.ARITHMETIC_OP, lexeme: char });
-      i++;
-      continue;
+      
+      // Integer division operator
+      if (char === '/' && nextChar === '/') {
+        tokenList.push({ line, type: TOKEN_TYPES.OP_INT_DIV, lexeme: '//' });
+        i += 2;
+        continue;
+      }
+      
+      // Exponentiation operator
+      if (char === '^') {
+        tokenList.push({ line, type: TOKEN_TYPES.OP_EXP, lexeme: '^' });
+        i++;
+        continue;
+      }
+      
+      // Basic arithmetic operators
+      const arithmeticOps = {
+        '+': TOKEN_TYPES.OP_ADD,
+        '-': TOKEN_TYPES.OP_SUB,
+        '*': TOKEN_TYPES.OP_MUL,
+        '/': TOKEN_TYPES.OP_DIV,
+        '%': TOKEN_TYPES.OP_MOD,
+      };
+      
+      if (arithmeticOps[char]) {
+        tokenList.push({ line, type: arithmeticOps[char], lexeme: char });
+        i++;
+        continue;
+      }
     }
 
     if (char === '!' || char === '>' || char === '<') {
@@ -317,31 +388,43 @@ export function lexicalAnalyzer(rawCode) {
       } else {
         i++;
       }
-      tokenList.push({ line, type: TOKEN_TYPES.RELATIONAL_OP, lexeme: op });
+      
+      // Map to correct token types
+      const relationalOps = {
+        '==': TOKEN_TYPES.OP_EQ,
+        '!=': TOKEN_TYPES.OP_NEQ,
+        '<': TOKEN_TYPES.OP_LT,
+        '>': TOKEN_TYPES.OP_GT,
+        '<=': TOKEN_TYPES.OP_LTE,
+        '>=': TOKEN_TYPES.OP_GTE,
+        '!': TOKEN_TYPES.OP_NOT,
+      };
+      
+      tokenList.push({ line, type: relationalOps[op], lexeme: op });
       continue;
     }
 
     if (char === '&' && code[i + 1] === '&') {
-      tokenList.push({ line, type: TOKEN_TYPES.LOGICAL_OP, lexeme: '&&' });
+      tokenList.push({ line, type: TOKEN_TYPES.OP_AND, lexeme: '&&' });
       i += 2;
       continue;
     }
     if (char === '|' && code[i + 1] === '|') {
-      tokenList.push({ line, type: TOKEN_TYPES.LOGICAL_OP, lexeme: '||' });
+      tokenList.push({ line, type: TOKEN_TYPES.OP_OR, lexeme: '||' });
       i += 2;
       continue;
     }
 
     const delimiterMap = {
-      '(': TOKEN_TYPES.DELIMITER_LEFT_PAREN,
-      ')': TOKEN_TYPES.DELIMITER_RIGHT_PAREN,
-      '[': TOKEN_TYPES.DELIMITER_LEFT_BRACKET,
-      ']': TOKEN_TYPES.DELIMITER_RIGHT_BRACKET,
-      '{': TOKEN_TYPES.DELIMITER_LEFT_BRACE,
-      '}': TOKEN_TYPES.DELIMITER_RIGHT_BRACE,
-      ':': TOKEN_TYPES.DELIMITER_COLON,
-      ',': TOKEN_TYPES.DELIMITER_COMMA,
-      ';': TOKEN_TYPES.DELIMITER_SEMICOLON,
+      '(': TOKEN_TYPES.DEL_LPAREN,
+      ')': TOKEN_TYPES.DEL_RPAREN,
+      '[': TOKEN_TYPES.DEL_LBRACK,
+      ']': TOKEN_TYPES.DEL_RBRACK,
+      '{': TOKEN_TYPES.DEL_LBRACE,
+      '}': TOKEN_TYPES.DEL_RBRACE,
+      ':': TOKEN_TYPES.DEL_PERIOD, // Using DEL_PERIOD for colon temporarily
+      ',': TOKEN_TYPES.DEL_COMMA,
+      ';': TOKEN_TYPES.DEL_SEMICOLON,
     };
 
     if (delimiterMap[char]) {

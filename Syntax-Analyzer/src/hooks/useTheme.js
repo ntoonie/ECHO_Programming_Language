@@ -1,13 +1,15 @@
 import { useState, useLayoutEffect } from 'react';
 
 /**
- * =========================================
- * Theme Hook – Dark Mode Management
- * =========================================
+ * Theme Hook
+ * 
+ * Manages dark mode state and DOM theme synchronization.
+ * Handles localStorage persistence and prevents theme flash.
+ * Dependencies: React hooks (useState, useLayoutEffect)
  */
 
 export const useTheme = () => {
-  // Initialize theme from localStorage and apply to DOM immediately.
+  // Initialize theme from localStorage and apply to DOM immediately
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
     const shouldBeDark = savedTheme === 'dark';
@@ -20,7 +22,7 @@ export const useTheme = () => {
     return shouldBeDark;
   });
 
-  // Synchronously update DOM class to prevent flash of wrong theme.
+  // Synchronously update DOM class to prevent flash of wrong theme
   useLayoutEffect(() => {
     const html = document.documentElement;
     if (isDarkMode) {
@@ -30,7 +32,7 @@ export const useTheme = () => {
       html.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
-    void html.offsetHeight;
+    void html.offsetHeight;  // Force reflow
   }, [isDarkMode]);
 
   const handleThemeToggle = (e) => {
@@ -45,7 +47,7 @@ export const useTheme = () => {
       html.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
-    void html.offsetHeight;
+    void html.offsetHeight;  // Force reflow
     setIsDarkMode(newMode);
   };
 

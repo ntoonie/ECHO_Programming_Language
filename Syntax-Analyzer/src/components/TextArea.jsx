@@ -1,11 +1,12 @@
-/**
- * =========================================
- * Line-Numbered Textarea – Code Input
- * =========================================
- */
+/*
+Line-Numbered Textarea – Code Input
+
+Enhanced textarea component with line numbers, error indicators, and syntax highlighting for code input.
+Depends on React, lucide-react icons.
+*/
 
 import React, { useEffect, useRef, useState, useMemo, memo } from "react";
-import { AlertCircle, Copy, Download, Sparkles } from "lucide-react";
+import { AlertCircle, Copy, Download, X } from "lucide-react";
 
 const LineNumberedTextarea = memo(function LineNumberedTextarea({
   value = "",
@@ -16,7 +17,7 @@ const LineNumberedTextarea = memo(function LineNumberedTextarea({
   errors = [],
   highlightedLine = null,
   onCopy,
-  onFormat,
+  onClear,
   onExport,
   showCopiedTooltip = false,
 }) {
@@ -54,7 +55,12 @@ const LineNumberedTextarea = memo(function LineNumberedTextarea({
     }
   }, [highlightedLine]);
 
-  const handleScroll = (e) => {
+/*
+Handle scroll synchronization between textarea and line numbers
+
+@param {Event} e - Scroll event
+*/
+const handleScroll = (e) => {
     if (gutterRef.current) {
       gutterRef.current.scrollTop = e.target.scrollTop;
     }
@@ -72,7 +78,12 @@ const LineNumberedTextarea = memo(function LineNumberedTextarea({
     }
   }, [textareaRef]);
 
-  const handleChange = (e) => onChange(e.target.value);
+/*
+Handle textarea value change
+
+@param {Event} e - Change event
+*/
+const handleChange = (e) => onChange(e.target.value);
   const lineNumbers = Array.from({ length: lines }, (_, i) => i + 1);
 
   return (
@@ -156,13 +167,13 @@ const LineNumberedTextarea = memo(function LineNumberedTextarea({
       {/* Developer Utility Toolbar */}
       <div className="border-t border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50 px-3 py-2 flex items-center justify-end gap-2 flex-shrink-0">
         <button
-          onClick={onFormat}
+          onClick={onClear}
           disabled={!value.trim()}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-purple-500 hover:bg-purple-600 disabled:bg-slate-300 disabled:dark:bg-slate-700 disabled:cursor-not-allowed text-white transition-colors"
-          title="Format Code (Auto-indent)"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-red-500 hover:bg-red-600 disabled:bg-slate-300 disabled:dark:bg-slate-700 disabled:cursor-not-allowed text-white transition-colors"
+          title="Clear text box"
         >
-          <Sparkles size={14} />
-          <span>Format</span>
+          <X size={14} />
+          <span>Clear</span>
         </button>
 
         <button
