@@ -12,10 +12,15 @@ import { getAllSamples } from '../data/codeSamples';
 /*
 Syntax Dashboard – Main Application View
 
-Main dashboard component that orchestrates the syntax analyzer interface with code editor, error console, and AST visualization.
+Main dashboard component that orchestrates the syntax analyzer interface.
 Depends on React, framer-motion, lucide-react icons, and custom hooks.
 */
 
+/*
+Syntax Dashboard Component
+
+Main interface component for the ECHO syntax analyzer.
+*/
 const SyntaxDashboard = () => {
   const { isDarkMode, handleThemeToggle } = useTheme();
   const [activeTab, setActiveTab] = useState('errors'); // 'errors' or 'ast'

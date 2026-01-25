@@ -15,6 +15,7 @@ Check if character is a letter
 @returns {Boolean} True if character is a letter
 */
 const isLetter = (c) => /[A-Za-z]/.test(c);
+
 /*
 Check if character is a digit
 
@@ -134,25 +135,7 @@ export const lexicalAnalyzer = (rawCode) => {
         if (code[i] === '@') {
           // Check for invalid space after @
           if (i + 1 < code.length && code[i+1] === ' ') {
-             // Treat as literal '@' inside string content if it has a space, 
-             // but maybe we want to error here? 
-             // The prompt says: 'echo "Hello, @ user" /* Error: Space not allowed after @ */'
-             // So we should tokenizing this as an ERROR token or let the parser handle it.
-             // Best approach: Tokenize it as SIS_MARKER but with empty/invalid content so parser rejects it?
-             // OR: Tokenize as string content '@', and let the parser complain?
-             // Actually, if we treat '@ ' as just text, it validates as a string literal. 
-             // To trigger the error requested, we must detect '@ ' and fail or create a specific error token.
-             
-             // Strategy: If '@' is followed by space, emit an error token or handle logic.
-             // We'll treat it as a special INVALID_SIS token or just text. 
-             // However, to satisfy "Error: Space not allowed after @", we should probably 
-             // consume the '@' and space and emit an UNKNOWN/ERROR token.
-             
-             // BUT, if it's just text, maybe it SHOULD be valid? 
-             // The prompt implies it expects an error. 
-             // We will treat '@' followed by space as a potential SIS start that failed.
-             
-             // Let's stop the current string segment.
+             // Emit error token for space after @
              if (currentSegment.length > 0) {
                 tokenList.push({ 
                   line: startLine,
@@ -163,17 +146,15 @@ export const lexicalAnalyzer = (rawCode) => {
                 currentSegment = '';
              }
 
-             // Emit a specific error token for the parser to catch
              tokenList.push({
                 line,
                 column: column,
-                type: TOKEN_TYPES.UNKNOWN, // Parser will see this inside string context? No, parser sees stream.
-                lexeme: '@ ' // Mark this specifically
+                type: TOKEN_TYPES.UNKNOWN,
+                lexeme: '@ '
              });
              
              column += 2;
              i += 2;
-             // Reset start for next segment
              startLine = line;
              startColumn = column;
              continue;

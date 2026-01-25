@@ -1,17 +1,11 @@
-/**
- * Code Samples Library
- * * Provides a comprehensive suite of test cases for the ECHO language syntax analyzer.
- * Includes 10 valid cases and 10 invalid cases to demonstrate grammar rules.
- * * Legend:
- * ✓ = Valid Code (Should compile/run)
- * ⚠ = Invalid Code (Should trigger parser/compiler errors)
- */
+/*
+Code Samples Library
+
+Provides test cases for the ECHO language syntax analyzer with valid and invalid examples.
+*/
 
 export const CODE_SAMPLES = {
-  // ==========================================
-  // PART 1: VALID TEST CASES (Grammar Compliance)
-  // ==========================================
-
+  // Valid test cases (grammar compliance)
   VALID_MINIMAL: {
     id: 'valid_minimal',
     label: '✓ 1. Minimal Hello World (Valid)',

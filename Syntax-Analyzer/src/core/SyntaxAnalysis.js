@@ -1,5 +1,6 @@
 /*
 ECHO Language Syntax Analyzer
+
 Recursive descent parser for O(N) performance.
 Dependencies: TokenTypes, ASTBuilder
 */
@@ -28,6 +29,11 @@ const GRAMMAR_RULES = {
   INPUT: '<input_stmt> => <identifier> "=" "input" "(" <data_type> ["," <expression>] ")"'
 };
 
+/*
+Analyzer Class
+
+Main syntax analyzer class with error handling and parsing capabilities.
+*/
 class Analyzer {
   constructor(tokens) {
     this.tokens = tokens.filter(t => 
@@ -47,8 +53,7 @@ class Analyzer {
     this.symbolTable = new Map();
   }
 
-  // --- Utility Methods ---
-
+  // Utility methods
   current() {
     return this.pos < this.tokens.length ? this.tokens[this.pos] : null;
   }
@@ -76,13 +81,12 @@ class Analyzer {
     return this.pos >= this.tokens.length;
   }
 
-  // Error reporting with Duplicate Suppression and Panic Mode
+  // Error reporting with duplicate suppression and panic mode
   error(message, category = ERROR_CATEGORIES.SYNTAX_ERROR, context = {}) {
-    // 1. Suppress errors during panic mode to prevent cascading
-    // (Except structural errors which might help re-sync)
+    // Suppress errors during panic mode to prevent cascading
     if (this.panicMode && category !== ERROR_CATEGORIES.STRUCTURAL_ERROR) return;
 
-    // 2. Prevent identical duplicates
+    // Prevent identical duplicates
     const token = context.token || this.current() || this.tokens[this.tokens.length - 1];
     const line = token ? token.line : 1;
     const column = token ? (token.column || 1) : 1;

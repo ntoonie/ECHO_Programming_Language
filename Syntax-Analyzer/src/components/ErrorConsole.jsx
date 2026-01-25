@@ -4,10 +4,19 @@ import { FileText, CheckCircle2, AlertTriangle, Info, XCircle, AlertCircle } fro
 /*
 Error Console – Enhanced Syntax Error Display
 
-Provides comprehensive error reporting with grammar-specific messages, error categorization, and developer-friendly navigation.
+Provides comprehensive error reporting with grammar-specific messages and error categorization.
 Depends on React, lucide-react icons.
 */
 
+/*
+Error Console Component
+
+@param {Array} errors - Array of error objects
+@param {Array} warnings - Array of warning objects
+@param {Function} onErrorClick - Error click handler
+@param {Object} metrics - Analysis metrics
+@param {Boolean} astValid - AST validity flag
+*/
 const ErrorConsole = memo(function ErrorConsole({ errors, warnings, onErrorClick, metrics, astValid }) {
   const hasMetrics = metrics && (metrics.totalTokens > 0 || metrics.linesOfCode > 0);
   const hasIssues = errors.length > 0 || warnings.length > 0;

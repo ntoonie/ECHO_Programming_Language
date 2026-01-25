@@ -1,7 +1,7 @@
 /*
 Abstract Syntax Tree – AST Visualization Component
 
-Interactive tree visualization component for displaying and navigating abstract syntax tree structures with node details and grammar rule references.
+Interactive tree visualization component for displaying and navigating abstract syntax tree structures.
 Depends on React, lucide-react icons.
 */
 
@@ -12,8 +12,7 @@ import {
   Type, Box, List as ListIcon, Play
 } from 'lucide-react';
 
-/*
-AST Configuration
+/* AST Configuration
 
 Maps node types to their visual properties and structural children.
 Aligns with ASTBuilder.js output and FORMAL_GRAMMAR.md.
@@ -282,6 +281,14 @@ const getGrammarRule = (nodeType) => {
 
 /*
 Recursive Tree Node Component
+
+@param {Object} node - AST node data
+@param {Number} depth - Current depth in tree
+@param {String} path - Node path in tree
+@param {Set} expandedNodes - Set of expanded node IDs
+@param {String} selectedNode - Currently selected node ID
+@param {Function} onToggle - Toggle node expansion
+@param {Function} onSelect - Select node callback
 */
 const ASTNode = memo(({ node, depth = 0, path, expandedNodes, selectedNode, onToggle, onSelect }) => {
   if (!node || typeof node !== 'object') return null;
@@ -399,6 +406,8 @@ const ASTNode = memo(({ node, depth = 0, path, expandedNodes, selectedNode, onTo
 
 /*
 Main AST Display Component
+
+@param {Object} ast - Abstract syntax tree data
 */
 const AbstractSyntaxTree = ({ ast }) => {
   const [expandedNodes, setExpandedNodes] = useState(new Set());

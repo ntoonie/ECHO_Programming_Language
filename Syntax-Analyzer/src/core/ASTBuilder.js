@@ -2,14 +2,12 @@
 Abstract Syntax Tree Builder – ECHO Language Parser
 
 Recursive descent parser that builds AST structures from token streams following ECHO formal grammar.
-Handles program structure, declarations, control flow, and expressions with comprehensive error recovery.
 Depends on TokenTypes module.
 */
 
 import { TOKEN_TYPES, isDataType } from '../../../shared/tokenTypes.js';
 
-/*
-AST Node Types
+/* AST Node Types
 
 Mapped to non-terminal symbols in ECHO formal grammar.
 */
@@ -123,8 +121,7 @@ export const buildAST = (tokens) => {
   let current = 0;
   const errors = [];
 
-  // --- Parser Primitives ---
-
+  // Parser primitives
   const isAtEnd = () => current >= tokens.length;
   const peek = (offset = 0) => (current + offset >= tokens.length ? null : tokens[current + offset]);
   const previous = () => (current > 0 ? tokens[current - 1] : null);

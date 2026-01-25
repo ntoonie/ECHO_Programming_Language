@@ -1,13 +1,28 @@
 /*
 Line-Numbered Textarea – Code Input
 
-Enhanced textarea component with line numbers, error indicators, and syntax highlighting for code input.
+Enhanced textarea component with line numbers and error indicators for code input.
 Depends on React, lucide-react icons.
 */
 
 import React, { useEffect, useRef, useState, useMemo, memo } from "react";
 import { AlertCircle, Copy, Download, X } from "lucide-react";
 
+/*
+Line-Numbered Textarea Component
+
+@param {String} value - Textarea content
+@param {Function} onChange - Change handler
+@param {Object} textareaRef - Textarea ref
+@param {String} className - CSS classes
+@param {Function} onKeyDown - Key down handler
+@param {Array} errors - Array of error objects
+@param {Number} highlightedLine - Line to highlight
+@param {Function} onCopy - Copy handler
+@param {Function} onClear - Clear handler
+@param {Function} onExport - Export handler
+@param {Boolean} showCopiedTooltip - Show copied tooltip
+*/
 const LineNumberedTextarea = memo(function LineNumberedTextarea({
   value = "",
   onChange = () => {},

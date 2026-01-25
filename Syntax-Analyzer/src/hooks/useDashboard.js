@@ -4,14 +4,18 @@ import { syntaxAnalyzer } from '../core/SyntaxAnalysis';
 import { TOKEN_TYPES } from '../../../shared/tokenTypes';
 import { getSampleById } from '../data/codeSamples';
 
-/**
- * Dashboard Hook
- * 
- * Manages state and event logic for the syntax analyzer dashboard.
- * Handles code editing, analysis, history, and file operations.
- * Dependencies: React hooks, LexicalScanner, SyntaxAnalysis, tokenTypes, codeSamples
- */
+/*
+Dashboard Hook
 
+Manages state and event logic for the syntax analyzer dashboard.
+Dependencies: React hooks, LexicalScanner, SyntaxAnalysis, tokenTypes, codeSamples
+*/
+
+/*
+Dashboard hook for syntax analyzer state management
+
+@returns {Object} Dashboard state and handler functions
+*/
 export const useDashboard = () => {
   const [sourceCode, setSourceCode] = useState('');
   const [errors, setErrors] = useState([]);
