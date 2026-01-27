@@ -146,7 +146,7 @@ class Analyzer {
   }
 
   // =========================================================================
-  // Symbol Table & Semantics
+  // Symbol Table
   // =========================================================================
 
   declareVariable(name, type, initialized = false) {

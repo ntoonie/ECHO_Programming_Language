@@ -21,6 +21,28 @@ const ErrorConsole = memo(function ErrorConsole({ errors, warnings, onErrorClick
   const hasMetrics = metrics && (metrics.totalTokens > 0 || metrics.linesOfCode > 0);
   const hasIssues = errors.length > 0 || warnings.length > 0;
 
+  // Sort all errors and warnings by line, then column, then severity
+  const sortedErrors = [...errors, ...warnings].sort((a, b) => {
+    // Sort by line first, then column, then severity
+    if (a.line !== b.line) return a.line - b.line;
+    if (a.column !== b.column) return a.column - b.column;
+    // Errors before warnings
+    if (a.severity === 'error' && b.severity === 'warning') return -1;
+    if (a.severity === 'warning' && b.severity === 'error') return 1;
+    return 0;
+  });
+
+  // Group errors by line and take only the first error from each line
+  const errorsByLine = {};
+  sortedErrors.forEach(error => {
+    if (!errorsByLine[error.line]) {
+      errorsByLine[error.line] = error;
+    }
+  });
+
+  // Convert back to array and sort by line number
+  const displayErrors = Object.values(errorsByLine).sort((a, b) => a.line - b.line);
+
   return (
     <div className="w-full p-4 flex justify-center items-start">
       {/* Success State */}
@@ -58,7 +80,7 @@ const ErrorConsole = memo(function ErrorConsole({ errors, warnings, onErrorClick
           <div className="bg-red-100 dark:bg-red-900/40 px-4 py-3 border-b-2 border-red-300 dark:border-red-700">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-red-800 dark:text-red-200">
-                Syntax Issues ({errors.length} errors, {warnings.length} warnings)
+                Syntax Issues ({errors.length} errors, {warnings.length} warnings) - Showing {displayErrors.length} line{displayErrors.length !== 1 ? 's' : ''}
               </h3>
             </div>
           </div>
@@ -80,17 +102,7 @@ const ErrorConsole = memo(function ErrorConsole({ errors, warnings, onErrorClick
                 </tr>
               </thead>
               <tbody>
-                {[...errors, ...warnings]
-                  .sort((a, b) => {
-                    // Sort by line first, then column, then severity
-                    if (a.line !== b.line) return a.line - b.line;
-                    if (a.column !== b.column) return a.column - b.column;
-                    // Errors before warnings
-                    if (a.severity === 'error' && b.severity === 'warning') return -1;
-                    if (a.severity === 'warning' && b.severity === 'error') return 1;
-                    return 0;
-                  })
-                  .map((error, index) => (
+                {displayErrors.map((error, index) => (
                   <tr
                     key={error.id || `error-${index}`}
                     onClick={() => onErrorClick && onErrorClick(error.line, error.column)}
@@ -128,10 +140,15 @@ const ErrorConsole = memo(function ErrorConsole({ errors, warnings, onErrorClick
                     <strong>{warnings.length}</strong> warning{warnings.length !== 1 ? 's' : ''}
                   </span>
                 )}
+                {(errors.length + warnings.length) > displayErrors.length && (
+                  <span>
+                    Showing <strong>{displayErrors.length}</strong> line{displayErrors.length !== 1 ? 's' : ''} of <strong>{errors.length + warnings.length}</strong> total issues
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Info size={12} />
-                <span>Click any error to navigate to the source location</span>
+                <span>One error shown per line - fix errors to see others on the same line</span>
               </div>
             </div>
           </div>
